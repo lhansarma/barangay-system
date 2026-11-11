@@ -5,21 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eBarangay Borongan - Government With The People</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    }
-    html {
-      scroll-behavior: smooth;
-    }
-    body {
-      background: #f4f6f9;
-      color: #1a1a1a;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; }
+    html { scroll-behavior: smooth; }
+    body { background: #f4f6f9; color: #1a1a1a; }
 
-    /* COLORS - SAME SA DASHBOARD */
     :root {
       --primary: #3498db;
       --primary-dark: #2980b9;
@@ -28,7 +17,6 @@
       --dark: #2c3e50;
     }
 
-    /* HEADER */
     header {
       background: white;
       padding: 18px 0;
@@ -66,9 +54,7 @@
       font-size: 15px;
       transition: 0.2s;
     }
-    .nav a:hover {
-      color: var(--primary);
-    }
+    .nav a:hover { color: var(--primary); }
     .nav a.btn-header {
       background: var(--success);
       color: white;
@@ -82,7 +68,6 @@
       transform: translateY(-2px);
     }
 
-    /* BUTTONS */
     .btn {
       background: var(--primary);
       color: white;
@@ -94,10 +79,7 @@
       transition: 0.2s;
       display: inline-block;
     }
-    .btn:hover {
-      background: var(--primary-dark);
-      transform: translateY(-2px);
-    }
+    .btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
     .btn-white {
       background: white;
       color: var(--primary);
@@ -110,12 +92,8 @@
       transition: 0.2s;
       display: inline-block;
     }
-    .btn-white:hover {
-      background: var(--primary);
-      color: white;
-    }
+    .btn-white:hover { background: var(--primary); color: white; }
 
-    /* HERO SECTION */
     .hero {
       padding: 100px 0;
       text-align: center;
@@ -129,9 +107,7 @@
       margin-bottom: 20px;
       letter-spacing: -2px;
     }
-    .hero h1 span {
-      color: #ecf0f1;
-    }
+    .hero h1 span { color: #ecf0f1; }
     .hero p {
       font-size: 18px;
       color: #e0e0e0;
@@ -149,16 +125,9 @@
       color: white;
       border: 2px solid white;
     }
-    .hero .btn-white:hover {
-      background: white;
-      color: var(--primary);
-    }
+    .hero .btn-white:hover { background: white; color: var(--primary); }
 
-    /* ABOUT SECTION */
-    .gwtd {
-      padding: 80px 0;
-      background: white;
-    }
+    .gwtd { padding: 80px 0; background: white; }
     .section-title {
       text-align: center;
       font-size: 36px;
@@ -190,17 +159,9 @@
       transform: translateY(-5px);
       box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
     }
-    .card h3 {
-      font-size: 20px;
-      margin-bottom: 10px;
-      color: var(--primary);
-    }
-    .card p {
-      color: #666;
-      line-height: 1.6;
-    }
+    .card h3 { font-size: 20px; margin-bottom: 10px; color: var(--primary); }
+    .card p { color: #666; line-height: 1.6; }
 
-    /* CTA SECTION */
     .cta {
       padding: 80px 0;
       background: linear-gradient(135deg, var(--success), var(--success-dark));
@@ -209,25 +170,15 @@
       border-radius: 20px;
       margin: 0 5%;
     }
-    .cta h2 {
-      font-size: 36px;
-      margin-bottom: 15px;
-    }
-    .cta p {
-      color: #d4edda;
-      margin-bottom: 25px;
-    }
+    .cta h2 { font-size: 36px; margin-bottom: 15px; }
+    .cta p { color: #d4edda; margin-bottom: 25px; }
     .cta .btn-white {
       background: white;
       color: var(--success);
       border: 2px solid white;
     }
-    .cta .btn-white:hover {
-      background: var(--success-dark);
-      color: white;
-    }
+    .cta .btn-white:hover { background: var(--success-dark); color: white; }
 
-    /* FOOTER */
     footer {
       background: var(--dark);
       color: #aaa;
@@ -237,18 +188,10 @@
       font-size: 14px;
     }
 
-    /* RESPONSIVE */
     @media(max-width: 768px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      .hero h1 {
-        font-size: 36px;
-      }
-      .hero-btns {
-        flex-direction: column;
-        align-items: center;
-      }
+      .grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 36px; }
+      .hero-btns { flex-direction: column; align-items: center; }
     }
   </style>
 </head>
@@ -263,8 +206,8 @@
       <div class="nav">
         <a href="#gwtd">About</a>
         <a href="#services">Services</a>
-        <a href="login.php">Login</a>
-        <a href="register.php" class="btn-header">Register</a>
+        <a href="login.html">Login</a>
+        <a href="register.html" class="btn-header">Register</a>
       </div>
     </div>
   </header>
@@ -273,7 +216,7 @@
     <h1>Government <span>With</span> The People</h1>
     <p>Bringing barangay services closer to you. Request documents, file complaints, and get updates - all online.</p>
     <div class="hero-btns">
-      <a href="register.php" class="btn">Get Started</a>
+      <a href="register.html" class="btn">Get Started</a>
       <a href="#gwtd" class="btn-white">Learn More</a>
     </div>
   </section>
@@ -302,7 +245,7 @@
   <section class="cta" id="services">
     <h2>Ready to get started?</h2>
     <p>Create your free account in less than 2 minutes.</p>
-    <a href="register.php" class="btn-white">Create Account</a>
+    <a href="register.html" class="btn-white">Create Account</a>
   </section>
 
   <footer>
