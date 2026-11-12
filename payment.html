@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment - eBarangay</title>
+<style>
+  * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+  .card { background: white; padding: 40px; border-radius: 16px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+  h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
+  .amount-box { background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+  .amount-box h3 { color: #7f8c8d; font-size: 14px; margin-bottom: 5px; font-weight: normal; }
+  .amount-box h1 { color: #27ae60; margin: 0; font-size: 36px; }
+  .gcash-logo { color: #0070BA; font-weight: bold; font-style: italic; font-size: 24px; text-align: center; margin-bottom: 20px; }
+  .btn { width: 100%; padding: 15px; background: #0070BA; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+  .btn:hover { background: #005c99; }
+  .btn:disabled { background: #95a5a6; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="gcash-logo">GCash</div>
+  <h2>Checkout</h2>
+  
+  <div class="amount-box">
+    <h3>Total Amount to Pay</h3>
+    <h1>₱ 50.00</h1>
+    <p style="margin: 5px 0 0; color:#7f8c8d; font-size: 13px;">For: Barangay Clearance</p>
+  </div>
+
+  <p style="text-align: center; font-size: 14px; color: #7f8c8d; margin-bottom: 20px;">
+    By clicking "Pay Now", you will be redirected to the GCash payment gateway to complete your transaction securely.
+  </p>
+
+  <button class="btn" id="pay-btn" onclick="processPayment()">Pay Now via GCash</button>
+</div>
+
+<script>
+  function processPayment() {
+    const btn = document.getElementById('pay-btn');
+    btn.disabled = true;
+    btn.textContent = 'Connecting to GCash...';
+
+    // Simulate API delay
+    setTimeout(() => {
+      btn.textContent = 'Processing...';
+      
+      setTimeout(() => {
+        alert("✅ Payment Successful! Reference No: 10029384921");
+        // Redirect back to dashboard after successful payment
+        window.location.href = 'resident_dashboard.html';
+      }, 1500);
+
+    }, 1000);
+  }
+</script>
+</body>
+</html>

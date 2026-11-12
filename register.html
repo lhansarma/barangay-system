@@ -16,8 +16,26 @@
     .form-group label { display: block; margin-bottom: 8px; color: #2c3e50; font-weight: 600; font-size: 14px; }
     .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border: 2px solid #ecf0f1; border-radius: 8px; font-size: 15px; }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #27ae60; outline: none; }
+    
+    /* Password wrapper styles */
+    .password-wrapper { position: relative; }
+    .password-wrapper input { padding-right: 60px; }
+    .toggle-password { 
+      position: absolute; 
+      right: 12px; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      cursor: pointer; 
+      font-size: 13px; 
+      color: #27ae60; 
+      font-weight: 600;
+      user-select: none; 
+    }
+    .toggle-password:hover { color: #229954; text-decoration: underline; }
+
     .btn { width: 100%; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
     .btn:hover { background: #229954; }
+    .btn:disabled { background: #95a5a6; cursor: not-allowed; }
     .btn-back { background: #95a5a6; text-decoration: none; display: block; text-align: center; color: white; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 15px; margin-bottom: 10px; transition: 0.3s; }
     .btn-back:hover { background: #7f8c8d; }
     .error { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; display: none; }
@@ -25,14 +43,13 @@
     .logo { text-align: center; margin-bottom: 20px; font-size: 40px; }
     .bottom-link { text-align: center; margin-top: 20px; font-size: 14px; color: #7f8c8d; }
     .bottom-link a { color: #3498db; text-decoration: none; font-weight: 600; }
-    #otp-section { display: none; }
   </style>
 </head>
 <body>
   <div class="register-box">
     <div class="logo">📝</div>
     <h2>Create Account</h2>
-    <p>We will send an OTP to your email</p>
+    <p>We will send a verification email to your inbox</p>
 
     <div class="error" id="error-box"></div>
     <div class="success" id="success-box"></div>
@@ -73,27 +90,21 @@
       <div class="form-row">
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="password" required minlength="8">
+          <div class="password-wrapper">
+            <input type="password" id="password" required minlength="8">
+            <span class="toggle-password" onclick="togglePassword('password', this)">Show</span>
+          </div>
         </div>
         <div class="form-group">
           <label>Confirm Password</label>
-          <input type="password" id="confirm_password" required minlength="8">
+          <div class="password-wrapper">
+            <input type="password" id="confirm_password" required minlength="8">
+            <span class="toggle-password" onclick="togglePassword('confirm_password', this)">Show</span>
+          </div>
         </div>
       </div>
-      <button type="submit" class="btn">Create Account &amp; Send OTP</button>
+      <button type="submit" id="submit-btn" class="btn">Create Account</button>
     </form>
-
-    <div id="otp-section">
-      <h2>Verify Your Email</h2>
-      <p>Enter the OTP we sent to your email</p>
-      <form onsubmit="return verifyOTP(event)">
-        <div class="form-group">
-          <label>OTP Code</label>
-          <input type="text" id="otp-input" maxlength="6" placeholder="6-digit code" required>
-        </div>
-        <button type="submit" class="btn">Verify OTP</button>
-      </form>
-    </div>
 
     <div class="bottom-link">
       Already have an account? <a href="login.html">Login here</a>
@@ -102,19 +113,26 @@
     <a href="index.html" class="btn-back">← Back to Home</a>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    function getUsers() {
-      const raw = localStorage.getItem('ebarangay_users');
-      return raw ? JSON.parse(raw) : [];
+    const SUPABASE_URL = 'https://kbngzddelbmpdbhxevon.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_acy7Ulw_hTPGY4zPVSBUoA_xm0HeXb_';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Function to toggle password visibility with text
+    function togglePassword(inputId, element) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        element.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        element.textContent = 'Show';
+      }
     }
-    function saveUsers(users) {
-      localStorage.setItem('ebarangay_users', JSON.stringify(users));
-    }
-    function findUser(identifier) {
-      const users = getUsers();
-      const id = identifier.toLowerCase().trim();
-      return users.find(u => u.email.toLowerCase() === id || u.username.toLowerCase() === id);
-    }
+
     function showError(msg) {
       const box = document.getElementById('error-box');
       box.textContent = msg; box.style.display = 'block';
@@ -126,11 +144,7 @@
       document.getElementById('error-box').style.display = 'none';
     }
 
-    let pendingUser = null;
-    let pendingOtp = null;
-    let pendingOtpTime = null;
-
-    function handleRegister(e) {
+    async function handleRegister(e) {
       e.preventDefault();
       const fullname = document.getElementById('fullname').value.trim();
       const email = document.getElementById('email').value.trim();
@@ -144,37 +158,47 @@
       if (!fullname || !email || !contact || !address || !birthdate || !gender || !password || !confirm) {
         showError('Please fill in all fields.'); return false;
       }
-      if (password !== confirm) { showError('Password and Confirm Password do not match.'); return false; }
-      if (password.length < 8) { showError('Password must be at least 8 characters.'); return false; }
-      if (findUser(email)) { showError('Email already exists. Please login instead.'); return false; }
+      if (password !== confirm) {
+        showError('Password and Confirm Password do not match.'); return false;
+      }
+      if (password.length < 8) {
+        showError('Password must be at least 8 characters.'); return false;
+      }
 
-      const username = email.split('@')[0];
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      pendingUser = { fullname, email, contact, address, birthdate, gender, password, username, role: 'resident' };
-      pendingOtp = otp;
-      pendingOtpTime = Date.now();
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
 
-      showSuccess('OTP Sent! (Demo OTP: ' + otp + ') - Valid for 10 minutes');
-      document.getElementById('register-form').style.display = 'none';
-      document.getElementById('otp-section').style.display = 'block';
-      return false;
-    }
+      const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            full_name: fullname,
+            contact_number: contact,
+            address: address,
+            birthdate: birthdate,
+            gender: gender,
+            role: 'resident'
+          }
+        }
+      });
 
-    function verifyOTP(e) {
-      e.preventDefault();
-      const input = document.getElementById('otp-input').value.trim();
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
 
-      if (!pendingOtp) { showError('No OTP was sent. Please register again.'); return false; }
-      if (Date.now() - pendingOtpTime > 10 * 60 * 1000) { showError('OTP expired. Please register again.'); return false; }
-      if (input !== pendingOtp) { showError('Invalid OTP. Please try again.'); return false; }
+      if (error) {
+        showError(error.message);
+        return false;
+      }
 
-      const users = getUsers();
-      users.push(pendingUser);
-      saveUsers(users);
-
-      showSuccess('Email verified successfully! Redirecting to login...');
-      document.getElementById('otp-section').style.display = 'none';
-      setTimeout(() => { window.location.href = 'login.html'; }, 1800);
+      if (data.user && data.session === null) {
+        showSuccess('Registration successful! Please check your email to verify your account.');
+        document.getElementById('register-form').reset();
+      } else if (data.user && data.session) {
+        showSuccess('Registration successful! Redirecting to dashboard...');
+        setTimeout(() => { window.location.href = 'resident_dashboard.html'; }, 1500);
+      }
       return false;
     }
   </script>

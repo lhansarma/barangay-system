@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - eBarangay Borongan</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+body { background: #f4f6f9; }
+.container { width: 100%; max-width: 100%; margin: 0; padding: 20px; }
+
+.header { background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+.header h2 { font-size: 24px; flex: 1; min-width: 250px; }
+.header-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.header-buttons a { padding: 12px 20px; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; transition: 0.3s; }
+.btn-request { background: #27ae60; }
+.btn-request:hover { background: #229954; }
+.btn-logout { background: #e74c3c; }
+.btn-logout:hover { background: #c0392b; }
+.btn-blue { background: #3498db; }
+.btn-blue:hover { background: #2980b9; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+.card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 4px solid #3498db; }
+.card h4 { color: #7f8c8d; font-size: 14px; margin-bottom: 10px; text-transform: uppercase; }
+.card h2 { color: #2c3e50; font-size: 32px; }
+
+.table-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.table-box h3 { color: #2c3e50; margin-bottom: 15px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 14px; text-align: left; border-bottom: 1px solid #ecf0f1; }
+th { background: #3498db; color: white; font-weight: 600; }
+tr:hover { background: #f8f9fa; }
+.status { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+.status.Pending { background: #fff3cd; color: #856404; }
+.status.Approved { background: #d4edda; color: #155724; }
+.status.Rejected { background: #f8d7da; color: #721c24; }
+.status.Ready { background: #cce5ff; color: #004085; }
+
+.empty-state { text-align: center; padding: 60px 20px; display: none; }
+.empty-state .icon { font-size: 70px; margin-bottom: 20px; }
+.empty-state h4 { color: #2c3e50; font-size: 22px; margin-bottom: 10px; }
+.empty-state p { color: #7f8c8d; margin-bottom: 25px; }
+.btn-primary { display: inline-block; padding: 14px 30px; background: #27ae60; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
+.btn-primary:hover { background: #229954; }
+
+@media(max-width: 768px){
+    .header { flex-direction: column; align-items: flex-start; }
+    .header-buttons { width: 100%; justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>Welcome, <span id="user-name">Loading...</span>! [Resident]</h2>
+        <div class="header-buttons">
+            <a href="request.html" class="btn-request">+ Request Document</a>
+            <a href="upload.html" class="btn-blue">📄 Upload Documents</a>
+            <a href="#" onclick="handleLogout(event)" class="btn-logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="cards">
+        <div class="card"><h4>Total Requests</h4><h2 id="total-count">0</h2></div>
+        <div class="card"><h4>Pending</h4><h2 id="pending-count">0</h2></div>
+        <div class="card"><h4>Ready</h4><h2 id="ready-count">0</h2></div>
+        <div class="card"><h4>Approved</h4><h2 id="approved-count">0</h2></div>
+    </div>
+
+    <div class="table-box">
+        <h3>📄 My Requests</h3>
+        
+        <table id="requests-table">
+        <thead>
+            <tr>
+                <th>Request ID</th>
+                <th>Document Type</th>
+                <th>Purpose</th>
+                <th>Date Requested</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <!-- Data will be injected here -->
+        </tbody>
+        </table>
+
+        <div class="empty-state" id="empty-state">
+            <div class="icon">📭</div>
+            <h4>No Requests Yet</h4>
+            <p>Submit your first barangay document request to get started.</p>
+            <a href="request.html" class="btn-primary">+ Request Your First Document</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = 'https://kbngzddelbmpdbhxevon.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_acy7Ulw_hTPGY4zPVSBUoA_xm0HeXb_';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUserId = null;
+
+    async function checkUser() {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        if (error || !session) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        currentUserId = session.user.id;
+        const fullName = session.user.user_metadata?.full_name || session.user.email;
+        document.getElementById('user-name').textContent = fullName;
+
+        // Load actual data from database
+        fetchMyRequests();
+    }
+
+    checkUser();
+
+    // 1. FETCH ACTUAL DATA FOR THIS USER
+    async function fetchMyRequests() {
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading requests...</td></tr>`;
+
+        // Query Supabase for requests where user_id matches the logged-in user
+        const { data, error } = await supabaseClient
+            .from('requests')
+            .select('*')
+            .eq('user_id', currentUserId)
+            .order('date_requested', { ascending: false });
+
+        if (error) {
+            console.error(error);
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Failed to load data: ${error.message}</td></tr>`;
+            return;
+        }
+
+        const table = document.getElementById('requests-table');
+        const emptyState = document.getElementById('empty-state');
+
+        let pending = 0, ready = 0, approved = 0;
+
+        if (data.length > 0) {
+            tbody.innerHTML = '';
+            
+            data.forEach(req => {
+                // Count statuses for the cards
+                if(req.status === 'Pending') pending++;
+                if(req.status === 'Ready') ready++;
+                if(req.status === 'Approved') approved++;
+
+                const dateObj = new Date(req.date_requested);
+                const formattedDate = dateObj.toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#BRGY-${req.id}</td>
+                    <td>${req.doc_type}</td>
+                    <td>${req.purpose || 'N/A'}</td>
+                    <td>${formattedDate}</td>
+                    <td><span class="status ${req.status}">${req.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update Stats Cards
+            document.getElementById('total-count').textContent = data.length;
+            document.getElementById('pending-count').textContent = pending;
+            document.getElementById('ready-count').textContent = ready;
+            document.getElementById('approved-count').textContent = approved;
+
+        } else {
+            // No requests found for this user
+            table.style.display = 'none';
+            emptyState.style.display = 'block';
+            document.getElementById('total-count').textContent = '0';
+            document.getElementById('pending-count').textContent = '0';
+            document.getElementById('ready-count').textContent = '0';
+            document.getElementById('approved-count').textContent = '0';
+        }
+    }
+
+    async function handleLogout(e) {
+        e.preventDefault();
+        await supabaseClient.auth.signOut();
+        window.location.href = 'login.html';
+    }
+</script>
+</body>
+</html>

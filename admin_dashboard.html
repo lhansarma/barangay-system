@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Dashboard - eBarangay</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; background: #eef2f7; margin: 0; padding: 20px; }
+.header { background: #1c3d6c; color: white; padding: 20px 25px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header h2 { margin: 0; font-size: 22px; }
+.header div { font-size: 15px; }
+.header a { color: white; text-decoration: none; margin-left: 10px; font-weight: bold; }
+.header a:hover { text-decoration: underline; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+.card { background: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 4px solid #1c3d6c; }
+.card h3 { font-size: 13px; color: #666; margin: 0 0 10px 0; font-weight: normal; }
+.card p { font-size: 28px; font-weight: bold; margin: 0; color: #333; }
+.card p.orange { color: #d35400; }
+.filters { background: white; padding: 15px; border-radius: 6px; display: flex; gap: 10px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); align-items: center; flex-wrap: wrap; }
+input, select { padding: 10px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; flex: 1; min-width: 150px; outline: none; }
+button, .reset { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; color: white; text-decoration: none; font-size: 14px; font-weight: bold; }
+.filter-btn { background: #2c5282; }
+.filter-btn:hover { background: #1a365d; }
+.reset { background: #718096; display: inline-block; text-align: center; }
+.reset:hover { background: #4a5568; }
+h2.section-title { font-size: 20px; color: #2d3748; margin-bottom: 15px; }
+.table-container { background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto; padding: 5px; }
+table { width: 100%; border-collapse: collapse; }
+th { background: #1c3d6c; color: white; padding: 12px 15px; text-align: left; font-size: 13px; }
+td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #edf2f7; font-size: 13px; color: #2d3748; }
+.status-badge { padding: 5px 12px; border-radius: 12px; color: white; font-size: 12px; font-weight: bold; display: inline-block; text-align: center; }
+.Pending { background: #d68910; }
+.Approved { background: #27ae60; }
+.Rejected { background: #c0392b; }
+.Ready { background: #2980b9; }
+.approve-btn { background: #27ae60; padding: 6px 12px; border-radius: 4px; color: white; border: none; cursor: pointer; font-size: 12px; margin-right: 5px; }
+.reject-btn { background: #e53e3e; padding: 6px 12px; border-radius: 4px; color: white; border: none; cursor: pointer; font-size: 12px; }
+.approve-btn:hover { background: #229954; }
+.reject-btn:hover { background: #c53030; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h2>eBarangay Borongan - Admin</h2>
+    <div>
+        Hi, <span id="admin-name">Loading...</span> | 
+        <a href="#" onclick="handleLogout(event)">Logout</a>
+    </div>
+</div>
+
+<div class="stats">
+    <div class="card">
+        <h3>Total Requests</h3>
+        <p id="total-req">0</p>
+    </div>
+    <div class="card">
+        <h3>Pending Requests</h3>
+        <p class="orange" id="pending-req">0</p>
+    </div>
+    <div class="card">
+        <h3>Total Documents</h3>
+        <p id="total-docs">0</p>
+    </div>
+    <div class="card">
+        <h3>Pending Docs</h3>
+        <p class="orange" id="pending-docs">0</p>
+    </div>
+</div>
+
+<div class="filters">
+    <input type="text" id="search-input" placeholder="Search by name...">
+    
+    <select id="status-filter">
+        <option value="">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+    </select>
+
+    <select id="doc-filter">
+        <option value="">All Documents</option>
+        <option value="Barangay Clearance">Barangay Clearance</option>
+        <option value="Certificate of Indigency">Certificate of Indigency</option>
+        <option value="Certificate of Residency">Certificate of Residency</option>
+    </select>
+
+    <button class="filter-btn" onclick="applyFilters()">Filter</button>
+    <button class="reset" onclick="resetFilters()">Reset</button>
+</div>
+
+<h2 class="section-title">All Requests & Documents</h2>
+
+<div class="table-container">
+<table>
+<thead>
+<tr>
+    <th>Req #</th>
+    <th>Resident Name</th>
+    <th>Document Type</th>
+    <th>Date Requested</th>
+    <th>Request Status</th>
+    <th>Action</th>
+</tr>
+</thead>
+<tbody id="admin-table-body">
+    <!-- Rows will be loaded dynamically from Supabase -->
+</tbody>
+</table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = 'https://kbngzddelbmpdbhxevon.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_acy7Ulw_hTPGY4zPVSBUoA_xm0HeXb_';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let requestsData = []; // Empty array, will be filled by Supabase
+
+    async function checkAdmin() {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        if (error || !session) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const user = session.user;
+        const role = user.user_metadata?.role;
+        const name = user.user_metadata?.full_name || user.email;
+
+        if (role !== 'admin') {
+            alert("Access Denied. You are not an admin.");
+            window.location.href = 'resident_dashboard.html';
+            return;
+        }
+
+        document.getElementById('admin-name').textContent = name;
+        
+        // Fetch data from Supabase instead of using mock data
+        fetchRequests();
+    }
+
+    checkAdmin();
+
+    // 1. FETCH ACTUAL DATA
+    async function fetchRequests() {
+        const tbody = document.getElementById('admin-table-body');
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading data from database...</td></tr>`;
+
+        const { data, error } = await supabaseClient
+            .from('requests')
+            .select('*')
+            .order('date_requested', { ascending: false });
+
+        if (error) {
+            console.error(error);
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Failed to load data: ${error.message}</td></tr>`;
+            return;
+        }
+
+        // Map the database column names to what the UI expects
+        requestsData = data.map(req => ({
+            id: req.id,
+            name: req.fullname,
+            doc: req.doc_type,
+            date: req.date_requested,
+            status: req.status
+        }));
+
+        renderTable();
+    }
+
+    // 2. RENDER TABLE
+    function renderTable() {
+        const tbody = document.getElementById('admin-table-body');
+        tbody.innerHTML = '';
+
+        const search = document.getElementById('search-input').value.toLowerCase();
+        const status = document.getElementById('status-filter').value;
+        const docType = document.getElementById('doc-filter').value;
+
+        const filteredData = requestsData.filter(req => {
+            const matchSearch = req.name.toLowerCase().includes(search);
+            const matchStatus = status === '' || req.status === status;
+            const matchDoc = docType === '' || req.doc === docType;
+            return matchSearch && matchStatus && matchDoc;
+        });
+
+        let pendingCount = 0;
+        requestsData.forEach(r => { if(r.status === 'Pending') pendingCount++; });
+        document.getElementById('total-req').textContent = requestsData.length;
+        document.getElementById('pending-req').textContent = pendingCount;
+        
+        if (filteredData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 25px; color: #718096;">No requests found.</td></tr>`;
+            return;
+        }
+
+        filteredData.forEach(req => {
+            const tr = document.createElement('tr');
+            const d = new Date(req.date);
+            const formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+
+            let actionHtml = `<span style="color: #718096; font-size: 12px;">Completed</span>`;
+            if (req.status === 'Pending') {
+                actionHtml = `
+                    <button class="approve-btn" onclick="updateStatus(${req.id}, 'Approved')">Approve</button>
+                    <button class="reject-btn" onclick="updateStatus(${req.id}, 'Rejected')">Reject</button>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td>${req.id}</td>
+                <td>${req.name}</td>
+                <td>${req.doc}</td>
+                <td>${formattedDate}</td>
+                <td><span class="status-badge ${req.status}">${req.status}</span></td>
+                <td>${actionHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function applyFilters() {
+        renderTable();
+    }
+
+    function resetFilters() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('status-filter').value = '';
+        document.getElementById('doc-filter').value = '';
+        renderTable();
+    }
+
+    // 3. UPDATE STATUS IN DATABASE
+    async function updateStatus(id, newStatus) {
+        if (!confirm(`Are you sure you want to mark request #${id} as ${newStatus}?`)) return;
+
+        // Change button text temporarily to show it's saving
+        event.target.textContent = 'Saving...';
+        event.target.disabled = true;
+
+        const { error } = await supabaseClient
+            .from('requests')
+            .update({ status: newStatus })
+            .eq('id', id);
+
+        if (error) {
+            alert("Database Error: " + error.message);
+            event.target.textContent = newStatus === 'Approved' ? 'Approve' : 'Reject';
+            event.target.disabled = false;
+            return;
+        }
+
+        // If successful, re-fetch the data from the database to refresh the table
+        await fetchRequests();
+
+        // If Approved, ask to generate PDF
+        if (newStatus === 'Approved') {
+            setTimeout(() => {
+                if(confirm("Request approved! Do you want to generate the PDF Document with QR Code now?")) {
+                    window.location.href = 'generate_pdf.html';
+                }
+            }, 500);
+        }
+    }
+
+    async function handleLogout(e) {
+        e.preventDefault();
+        await supabaseClient.auth.signOut();
+        window.location.href = 'login.html';
+    }
+</script>
+</body>
+</html>
