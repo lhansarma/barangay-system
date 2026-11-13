@@ -4,56 +4,205 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Payment - eBarangay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-  * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
-  body { background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-  .card { background: white; padding: 40px; border-radius: 16px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-  h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
-  .amount-box { background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
-  .amount-box h3 { color: #7f8c8d; font-size: 14px; margin-bottom: 5px; font-weight: normal; }
-  .amount-box h1 { color: #27ae60; margin: 0; font-size: 36px; }
-  .gcash-logo { color: #0070BA; font-weight: bold; font-style: italic; font-size: 24px; text-align: center; margin-bottom: 20px; }
-  .btn { width: 100%; padding: 15px; background: #0070BA; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
-  .btn:hover { background: #005c99; }
-  .btn:disabled { background: #95a5a6; cursor: not-allowed; }
+  :root {
+    --bg-gradient: linear-gradient(135deg, #3b4b8b 0%, #2a68ba 45%, #1aa6f8 100%);
+    --glass-card: rgba(255, 255, 255, 0.11);
+    --glass-border: rgba(255, 255, 255, 0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+  
+  body { 
+    background: var(--bg-gradient); 
+    min-height: 100vh; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    padding: 20px; 
+    color: #ffffff;
+  }
+
+  .card { 
+    background: var(--glass-card); 
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 40px; 
+    border-radius: 22px; 
+    width: 100%; 
+    max-width: 480px; 
+    box-shadow: 0 28px 60px rgba(10, 22, 55, 0.45); 
+    border: 1px solid var(--glass-border);
+  }
+
+  h2 { text-align: center; margin-bottom: 20px; font-size: 24px; font-weight: 700; }
+  
+  .amount-box { 
+    background: rgba(255, 255, 255, 0.05); 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    padding: 25px; 
+    border-radius: 12px; 
+    text-align: center; 
+    margin-bottom: 25px; 
+  }
+  .amount-box h3 { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 5px; font-weight: normal; }
+  .amount-box h1 { color: #27ae60; margin: 0; font-size: 42px; font-weight: 700; }
+  .amount-box p { margin: 5px 0 0; color: rgba(255,255,255,0.6); font-size: 13px; }
+
+  label { display: block; margin-bottom: 8px; color: rgba(255,255,255,0.9); font-weight: 600; font-size: 13px; }
+  
+  select { 
+    width: 100%; 
+    padding: 14px 15px; 
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2); 
+    border-radius: 10px; 
+    font-size: 15px; 
+    color: #ffffff; 
+    margin-bottom: 15px; 
+    transition: 0.2s;
+    cursor: pointer;
+  }
+  select:focus { outline: none; border-color: #1aa6f8; background: rgba(255, 255, 255, 0.15); }
+  select option { color: #000000; background: #ffffff; }
+
+  /* Cash Notice Box */
+  #cash-notice {
+    display: none;
+    background: rgba(214, 137, 16, 0.2);
+    border: 1px solid #d68910;
+    color: #ffc107;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .btn { 
+    width: 100%; 
+    padding: 15px; 
+    background: #0275ff; 
+    color: white; 
+    border: none; 
+    border-radius: 10px; 
+    font-size: 16px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: 0.3s; 
+  }
+  .btn:hover { background: #0060df; transform: translateY(-2px); }
+  .btn:disabled { background: #7f8c8d; cursor: not-allowed; transform: none; }
+
+  .btn-cancel { 
+    background: transparent; 
+    border: 1px solid rgba(255,255,255,0.3); 
+    color: rgba(255,255,255,0.8); 
+    margin-top: 10px; 
+  }
+  .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+
+  @media(max-width: 768px) { 
+    .card { padding: 30px 20px; }
+  }
 </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="gcash-logo">GCash</div>
   <h2>Checkout</h2>
   
   <div class="amount-box">
     <h3>Total Amount to Pay</h3>
     <h1>₱ 50.00</h1>
-    <p style="margin: 5px 0 0; color:#7f8c8d; font-size: 13px;">For: Barangay Clearance</p>
+    <p>For: Barangay Document Request</p>
   </div>
 
-  <p style="text-align: center; font-size: 14px; color: #7f8c8d; margin-bottom: 20px;">
-    By clicking "Pay Now", you will be redirected to the GCash payment gateway to complete your transaction securely.
-  </p>
+  <form onsubmit="return processPayment(event)">
+    <label>Select Payment Method</label>
+    <select id="payment_method" required onchange="togglePaymentMethod()">
+      <option value="GCash">GCash (Pay Online)</option>
+      <option value="Cash">Cash (Pay at Barangay Hall)</option>
+    </select>
 
-  <button class="btn" id="pay-btn" onclick="processPayment()">Pay Now via GCash</button>
+    <!-- Notice shown only if Cash is selected -->
+    <div id="cash-notice">
+      <strong>Note:</strong> Please proceed to the Barangay Hall to pay the ₱50.00 fee. Your document will be released upon payment.
+    </div>
+
+    <button type="submit" id="pay-btn" class="btn">Pay Now via GCash</button>
+    <button type="button" class="btn btn-cancel" onclick="window.location.href='resident_dashboard.html'">Cancel</button>
+  </form>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  function processPayment() {
+  const SUPABASE_URL = 'https://kbngzddelbmpdbhxevon.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_acy7Ulw_hTPGY4zPVSBUoA_xm0HeXb_';
+  const { createClient } = supabase;
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Get Request ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const reqId = urlParams.get('id');
+
+  // Toggle UI based on selected method
+  function togglePaymentMethod() {
+    const method = document.getElementById('payment_method').value;
+    const notice = document.getElementById('cash-notice');
     const btn = document.getElementById('pay-btn');
+
+    if (method === 'Cash') {
+      notice.style.display = 'block';
+      btn.textContent = 'Confirm Cash Pickup';
+      btn.style.background = '#d68910'; // Orange for cash
+    } else {
+      notice.style.display = 'none';
+      btn.textContent = 'Pay Now via GCash';
+      btn.style.background = '#0275ff'; // Blue for GCash
+    }
+  }
+
+  // Process Payment
+  async function processPayment(e) {
+    e.preventDefault();
+    if(!reqId) return alert("No request ID found.");
+    
+    const btn = document.getElementById('pay-btn');
+    const method = document.getElementById('payment_method').value;
+    
     btn.disabled = true;
-    btn.textContent = 'Connecting to GCash...';
+    btn.textContent = method === 'Cash' ? 'Processing...' : 'Connecting to GCash...';
 
-    // Simulate API delay
-    setTimeout(() => {
-      btn.textContent = 'Processing...';
+    // Simulate delay
+    setTimeout(async () => {
       
-      setTimeout(() => {
-        alert("✅ Payment Successful! Reference No: 10029384921");
-        // Redirect back to dashboard after successful payment
-        window.location.href = 'resident_dashboard.html';
-      }, 1500);
+      // Determine if it should be marked as Paid (GCash) or Unpaid (Cash)
+      const paymentStatus = method === 'GCash' ? 'Paid' : 'Unpaid';
 
-    }, 1000);
+      // Update DB
+      const { error } = await supabaseClient
+        .from('requests')
+        .update({ payment_status: paymentStatus })
+        .eq('id', reqId);
+
+      if(error) {
+        alert("Payment update failed: " + error.message);
+        btn.disabled = false;
+        btn.textContent = method === 'Cash' ? 'Confirm Cash Pickup' : 'Pay Now via GCash';
+      } else {
+        if (method === 'GCash') {
+          alert(`✅ GCash Payment Successful!`);
+        } else {
+          alert(`✅ Cash option selected. Please pay at the Barangay Hall to claim your document.`);
+        }
+        window.location.href = 'resident_dashboard.html';
+      }
+    }, 1500);
   }
 </script>
 </body>

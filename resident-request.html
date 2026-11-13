@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Request Document - eBarangay</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="resident.css" />
+</head>
+<body>
+  <div class="dashboard-shell">
+    <aside class="sidebar">
+      <div>
+        <ul class="nav-list">
+          <div class="active-indicator"></div>
+          
+          <li class="nav-item" onclick="window.location.href='resident_dashboard.html'">
+            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" /><path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" /></svg></span>
+            <span>Dashboard</span>
+          </li>
+          
+          <li class="nav-item active">
+            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clip-rule="evenodd" /><path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375h1.875a5.23 5.23 0 013.434 1.279 9.72 9.72 0 00-6.963-6.963z" /></svg></span>
+            <span>Request Document</span>
+          </li>
+          
+          <li class="nav-item" onclick="window.location.href='resident-upload.html'">
+            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l4.5 4.5a.75.75 0 01-1.06 1.06l-3.22-3.22V16.5a.75.75 0 01-1.5 0V4.81L8.03 8.03a.75.75 0 01-1.06-1.06l4.5-4.5zM3 15.75a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg></span>
+            <span>Upload Files</span>
+          </li>
+
+          <li class="nav-item" onclick="window.location.href='resident-profile.html'">
+            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" /></svg></span>
+            <span>My Profile</span>
+          </li>
+        </ul>
+      </div>
+      <div class="profile-card">
+        <div class="avatar-ring"><img src="https://placehold.co/80x80/1d3557/ffffff?text=R" class="avatar-img" /></div>
+        <div class="w-full overflow-hidden">
+          <div class="text-sm font-semibold truncate" id="user-name">Loading...</div>
+          <div class="text-xs text-white/70">Resident</div>
+        </div>
+        <button onclick="handleLogout(event)" class="text-white/50 hover:text-red-400 ml-auto flex-shrink-0" title="Logout">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="form-container">
+        <h2 class="text-2xl font-bold text-center mb-6">📄 Request Document</h2>
+        <div class="alert-error" id="error-box"></div>
+        <div class="alert-success" id="success-box"></div>
+
+        <form id="request-form" onsubmit="return handleRequest(event)">
+          <label>Document Type</label>
+          <input type="text" id="doc_search" list="doc_options" placeholder="Type to search (e.g., Clearance)..." required onchange="selectDocument(this.value)">
+          <datalist id="doc_options">
+            <option value="Barangay Clearance"></option>
+            <option value="Certificate of Residency"></option>
+            <option value="Certificate of Indigency"></option>
+            <option value="Barangay Business Permit"></option>
+          </datalist>
+
+          <label>Full Name</label>
+          <input type="text" id="fullname" required>
+
+          <label>Contact Number</label>
+          <input type="text" id="contact" required>
+
+          <label>Address</label>
+          <input type="text" id="address" required>
+
+          <div id="purpose-container" style="display:none;">
+            <label>Purpose</label>
+            <input type="text" id="purpose_input" placeholder="e.g. Employment, Scholarship">
+          </div>
+
+          <label>Years of Residency (Optional)</label>
+          <input type="number" id="years_residency" placeholder="e.g. 5">
+
+          <label>Additional Notes (Optional)</label>
+          <textarea id="notes" rows="3"></textarea>
+
+          <button type="submit" id="submit-btn" class="btn-action btn-success w-full" style="padding: 14px; font-size: 16px;">Submit Request</button>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="resident.js"></script>
+</body>
+</html>

@@ -4,20 +4,71 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Generate Document - Admin</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
 <!-- QR Code Generator Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <style>
-  body { background: #525659; margin: 0; padding: 20px; font-family: 'Times New Roman', Times, serif; display: flex; flex-direction: column; align-items: center; }
-  .controls { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; }
-  .btn { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+  :root {
+    --bg-gradient: linear-gradient(135deg, #3b4b8b 0%, #2a68ba 45%, #1aa6f8 100%);
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.2);
+  }
+
+  * { box-sizing: border-box; }
+
+  body { 
+    background: #525659; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Inter', sans-serif; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    min-height: 100vh;
+  }
+
+  /* TOP GLASS NAVBAR */
+  header { 
+    background: var(--bg-gradient); 
+    width: 100%;
+    padding: 15px 0; 
+    border-bottom: 1px solid var(--glass-border); 
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    margin-bottom: 30px;
+  }
+  .header-container { width: 90%; max-width: 1200px; display: flex; justify-content: space-between; align-items: center; }
+  
+  .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 16px; color: #ffffff; text-decoration: none; }
+  
+  .controls { display: flex; gap: 10px; }
+  .btn { 
+    padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 8px; 
+    font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { background: #229954; transform: translateY(-2px); }
+  .btn-back { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; }
+  .btn-back:hover { background: rgba(255,255,255,0.2); }
   
   /* A4 Paper size simulation */
-  .document { background: white; width: 210mm; min-height: 297mm; padding: 25mm; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.5); position: relative; }
+  .document { 
+    background: white; width: 210mm; min-height: 297mm; padding: 25mm; 
+    box-sizing: border-box; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; 
+    font-family: 'Times New Roman', Times, serif; color: #000;
+    margin-bottom: 50px;
+  }
   
-  .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
-  .header h2 { margin: 0; font-size: 18px; }
-  .header h1 { margin: 5px 0; font-size: 24px; color: #1c3d6c; }
-  .header p { margin: 0; font-size: 14px; font-style: italic; }
+  .doc-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
+  .doc-header h2 { margin: 0; font-size: 18px; }
+  .doc-header h1 { margin: 5px 0; font-size: 24px; color: #1c3d6c; }
+  .doc-header p { margin: 0; font-size: 14px; font-style: italic; }
 
   .title { text-align: center; font-size: 28px; font-weight: bold; margin: 40px 0; letter-spacing: 2px; }
   
@@ -31,68 +82,128 @@
   
   .qr-section { text-align: center; }
   #qrcode { margin-bottom: 5px; }
-  .qr-section p { font-size: 12px; margin: 0; }
+  .qr-section p { font-size: 12px; margin: 0; font-weight: bold; }
 
+  /* PRINT SETTINGS */
   @media print {
-    body { background: white; padding: 0; }
-    .controls { display: none; }
-    .document { box-shadow: none; margin: 0; padding: 20mm; width: 100%; height: 100%; }
+    body { background: white; padding: 0; margin: 0; }
+    header { display: none; }
+    .document { box-shadow: none; margin: 0; padding: 15mm; width: 100%; height: 100%; border: none; }
   }
 </style>
 </head>
 <body>
 
-<div class="controls">
-  <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-  <a href="admin_dashboard.html" style="padding: 10px 20px; text-decoration: none; color: #333; border: 1px solid #ccc; border-radius: 4px;">Back to Dashboard</a>
-</div>
-
-<div class="document">
-  <div class="header">
-    <p>Republic of the Philippines</p>
-    <p>Province of Eastern Samar</p>
-    <p>City of Borongan</p>
-    <h1>BARANGAY E-GOVERNANCE</h1>
-    <p>Office of the Punong Barangay</p>
-  </div>
-
-  <div class="title">BARANGAY CLEARANCE</div>
-
-  <div class="content">
-    <strong>TO WHOM IT MAY CONCERN:</strong><br><br>
-    This is to certify that <strong>RENIEL O. BECINA</strong>, of legal age, Filipino citizen, and a resident of Barangay E-Governance, Borongan City, Eastern Samar, is known to be of good moral character and has no derogatory record filed in this office.<br><br>
-    This clearance is issued upon the request of the above-named person for <strong>EMPLOYMENT PURPOSES</strong>.<br><br>
-    Issued this 10th day of October, 2026 at Borongan City, Eastern Samar.
-  </div>
-
-  <div class="footer">
-    <div class="qr-section">
-      <!-- JS will generate the QR Code here -->
-      <div id="qrcode"></div>
-      <p>Doc No: DOC-2026-1001</p>
-      <p>Scan to verify</p>
+  <header>
+    <div class="header-container">
+      <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        Document Generator
+      </div>
+      
+      <div class="controls">
+        <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+        <a href="admin_dashboard.html" class="btn btn-back">← Back to Dashboard</a>
+      </div>
     </div>
-    
-    <div class="signature">
-      <h4>HON. JUAN DELA CRUZ</h4>
-      <p>Punong Barangay</p>
+  </header>
+
+  <!-- The Certificate -->
+  <div class="document">
+    <div class="doc-header">
+      <p>Republic of the Philippines</p>
+      <p>Province of Eastern Samar</p>
+      <p>City of Borongan</p>
+      <h1>BARANGAY E-GOVERNANCE</h1>
+      <p>Office of the Punong Barangay</p>
+    </div>
+
+    <!-- Dynamic Title -->
+    <div class="title" id="doc-title">LOADING...</div>
+
+    <!-- Dynamic Content -->
+    <div class="content">
+      <strong>TO WHOM IT MAY CONCERN:</strong><br><br>
+      This is to certify that <strong><span id="res-name">LOADING...</span></strong>, of legal age, Filipino citizen, and a resident of Barangay E-Governance, Borongan City, Eastern Samar, is known to be of good moral character and has no derogatory record filed in this office.<br><br>
+      This document is issued upon the request of the above-named person for <strong><span id="res-purpose">LOADING...</span></strong>.<br><br>
+      Issued this <strong><span id="current-date">LOADING...</span></strong> at Borongan City, Eastern Samar.
+    </div>
+
+    <div class="footer">
+      <div class="qr-section">
+        <div id="qrcode"></div>
+        <p id="doc-number">Doc No: LOADING...</p>
+        <p>Scan to verify</p>
+      </div>
+      
+      <div class="signature">
+        <h4>HON. JUAN DELA CRUZ</h4>
+        <p>Punong Barangay</p>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-  // Generate QR Code linking to our verification page
-  // We use a fake URL here, but in a real deployment, this would be your actual live website URL
-  const verifyURL = window.location.origin + "/verify.html?code=DOC-2026-1001";
-  
-  new QRCode(document.getElementById("qrcode"), {
-    text: verifyURL,
-    width: 100,
-    height: 100,
-    colorDark : "#000000",
-    colorLight : "#ffffff",
-    correctLevel : QRCode.CorrectLevel.H
-  });
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://kbngzddelbmpdbhxevon.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_acy7Ulw_hTPGY4zPVSBUoA_xm0HeXb_';
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function generateDocument() {
+      // Get the request ID from the URL (e.g., generate_pdf.html?id=5)
+      const urlParams = new URLSearchParams(window.location.search);
+      const reqId = urlParams.get('id');
+
+      // If no ID is passed, alert the user
+      if (!reqId) {
+        alert("No Request ID provided. Please approve a request from the dashboard first.");
+        return;
+      }
+
+      // 1. Fetch the request from the database
+      const { data, error } = await supabaseClient
+        .from('requests')
+        .select('*')
+        .eq('id', reqId)
+        .single();
+
+      if (error || !data) {
+        alert("Error loading request data from database.");
+        return;
+      }
+
+      // 2. Populate the document with actual database data
+      document.getElementById('res-name').textContent = data.fullname.toUpperCase();
+      document.getElementById('res-purpose').textContent = (data.purpose || 'GENERAL PURPOSE').toUpperCase();
+      
+      // Set Document Title
+      document.getElementById('doc-title').textContent = data.doc_type.toUpperCase();
+
+      // Set Date
+      const dateIssued = new Date();
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('current-date').textContent = dateIssued.toLocaleDateString('en-US', options);
+
+      // Set Document Number
+      const docNo = `DOC-${dateIssued.getFullYear()}-${String(data.id).padStart(4, '0')}`;
+      document.getElementById('doc-number').textContent = `Doc No: ${docNo}`;
+
+      // 3. Generate QR Code linking to the verification page
+      const verifyURL = window.location.origin + `/verify.html?code=${docNo}`;
+      
+      new QRCode(document.getElementById("qrcode"), {
+        text: verifyURL,
+        width: 100,
+        height: 100,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+    }
+
+    // Run when page loads
+    generateDocument();
+  </script>
 </body>
 </html>

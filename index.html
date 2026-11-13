@@ -5,52 +5,176 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eBarangay Borongan - Government With The People</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; }
+    :root {
+      --bg-gradient: linear-gradient(135deg, #3b4b8b 0%, #2a68ba 45%, #1aa6f8 100%);
+      --glass-bg: rgba(255, 255, 255, 0.08);
+      --glass-card: rgba(255, 255, 255, 0.11);
+      --glass-hover: rgba(255, 255, 255, 0.17);
+      --glass-border: rgba(255, 255, 255, 0.16);
+      --primary: #0275ff;
+      --primary-hover: #0060df;
+      --success: #27ae60;
+      --success-hover: #229954;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     html { scroll-behavior: smooth; }
-    body { background: #f4f6f9; color: #1a1a1a; }
-    :root { --primary: #3498db; --primary-dark: #2980b9; --success: #27ae60; --success-dark: #229954; --dark: #2c3e50; }
-    header { background: white; padding: 18px 0; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    
+    body { 
+      background: var(--bg-gradient); 
+      color: #ffffff; 
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* HEADER / NAVBAR */
+    header { 
+      background: var(--glass-bg); 
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 18px 0; 
+      border-bottom: 1px solid var(--glass-border); 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+    }
     .container { width: 90%; max-width: 1200px; margin: auto; display: flex; justify-content: space-between; align-items: center; }
-    .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 18px; color: var(--dark); }
-    .nav { display: flex; align-items: center; gap: 15px; }
-    .nav a { text-decoration: none; color: #333; font-weight: 500; font-size: 15px; transition: 0.2s; }
-    .nav a:hover { color: var(--primary); }
-    .nav a.btn-header { background: var(--success); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; }
-    .nav a.btn-header:hover { background: var(--success-dark); transform: translateY(-2px); }
-    .btn { background: var(--primary); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; transition: 0.2s; display: inline-block; }
-    .btn:hover { background: var(--primary-dark); transform: translateY(-2px); }
-    .btn-white { background: white; color: var(--primary); padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; border: 2px solid var(--primary); transition: 0.2s; display: inline-block; }
-    .btn-white:hover { background: var(--primary); color: white; }
-    .hero { padding: 100px 0; text-align: center; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
-    .hero h1 { font-size: 52px; font-weight: 700; line-height: 1.2; margin-bottom: 20px; letter-spacing: -2px; }
-    .hero h1 span { color: #ecf0f1; }
-    .hero p { font-size: 18px; color: #e0e0e0; max-width: 600px; margin: 0 auto 30px; line-height: 1.6; }
-    .hero-btns { display: flex; gap: 15px; justify-content: center; }
-    .hero .btn-white { background: transparent; color: white; border: 2px solid white; }
-    .hero .btn-white:hover { background: white; color: var(--primary); }
-    .gwtd { padding: 80px 0; background: white; }
-    .section-title { text-align: center; font-size: 36px; font-weight: 700; margin-bottom: 15px; color: var(--dark); }
-    .section-sub { text-align: center; color: #666; margin-bottom: 50px; max-width: 600px; margin-left: auto; margin-right: auto; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
-    .card { background: #f8f9fa; padding: 30px; border-radius: 16px; border: 1px solid #ddd; transition: transform 0.2s, box-shadow 0.2s; }
-    .card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2); }
-    .card h3 { font-size: 20px; margin-bottom: 10px; color: var(--primary); }
-    .card p { color: #666; line-height: 1.6; }
-    .cta { padding: 80px 0; background: linear-gradient(135deg, var(--success), var(--success-dark)); color: white; text-align: center; border-radius: 20px; margin: 0 5%; }
-    .cta h2 { font-size: 36px; margin-bottom: 15px; }
-    .cta p { color: #d4edda; margin-bottom: 25px; }
-    .cta .btn-white { background: white; color: var(--success); border: 2px solid white; }
-    .cta .btn-white:hover { background: var(--success-dark); color: white; }
-    footer { background: var(--dark); color: #aaa; padding: 40px 0; margin-top: 80px; text-align: center; font-size: 14px; }
-    @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } .hero h1 { font-size: 36px; } .hero-btns { flex-direction: column; align-items: center; } }
+    
+    .logo { display: flex; align-items: center; gap: 15px; font-weight: 700; font-size: 18px; color: #ffffff; }
+    .logo img { width: 70px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid var(--glass-border); background: white; padding: 2px; }
+    
+    .nav { display: flex; align-items: center; gap: 25px; }
+    .nav a { text-decoration: none; color: rgba(255,255,255,0.85); font-weight: 500; font-size: 15px; transition: 0.2s; }
+    .nav a:hover { color: #ffffff; }
+    
+    .nav a.btn-header { 
+      background: var(--primary); 
+      color: white; 
+      padding: 10px 22px; 
+      border-radius: 10px; 
+      font-weight: 600; 
+      font-size: 14px; 
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 4px 12px rgba(2, 117, 255, 0.3);
+      transition: 0.2s;
+    }
+    .nav a.btn-header:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+    /* BUTTONS */
+    .btn { 
+      background: var(--success); 
+      color: white; 
+      padding: 14px 30px; 
+      border-radius: 12px; 
+      text-decoration: none; 
+      font-weight: 600; 
+      font-size: 16px; 
+      transition: 0.2s; 
+      display: inline-block; 
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
+    }
+    .btn:hover { background: var(--success-hover); transform: translateY(-3px); }
+    
+    .btn-white { 
+      background: transparent; 
+      color: white; 
+      padding: 14px 30px; 
+      border-radius: 12px; 
+      text-decoration: none; 
+      font-weight: 600; 
+      font-size: 16px; 
+      border: 2px solid rgba(255,255,255,0.5); 
+      transition: 0.2s; 
+      display: inline-block; 
+    }
+    .btn-white:hover { background: rgba(255,255,255,0.1); border-color: #ffffff; transform: translateY(-3px); }
+
+    /* HERO SECTION */
+    .hero { padding: 120px 20px; text-align: center; position: relative; }
+    .hero h1 { font-size: 54px; font-weight: 700; line-height: 1.2; margin-bottom: 20px; letter-spacing: -1px; }
+    .hero h1 span { color: #1aa6f8; text-shadow: 0 0 20px rgba(26, 166, 248, 0.4); }
+    .hero p { font-size: 18px; color: rgba(255,255,255,0.8); max-width: 600px; margin: 0 auto 40px; line-height: 1.6; }
+    .hero-btns { display: flex; gap: 20px; justify-content: center; }
+
+    /* ABOUT / FEATURES SECTION */
+    .gwtd { padding: 80px 20px; }
+    .section-title { text-align: center; font-size: 36px; font-weight: 700; margin-bottom: 15px; color: #ffffff; }
+    .section-sub { text-align: center; color: rgba(255,255,255,0.7); margin-bottom: 50px; max-width: 600px; margin-left: auto; margin-right: auto; font-size: 16px; line-height: 1.6; }
+    
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; max-width: 1200px; margin: 0 auto; }
+    
+    .card { 
+      background: var(--glass-card); 
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 35px; 
+      border-radius: 20px; 
+      border: 1px solid var(--glass-border); 
+      transition: transform 0.3s ease, background 0.3s ease; 
+    }
+    .card:hover { transform: translateY(-8px); background: var(--glass-hover); box-shadow: 0 15px 30px rgba(8, 25, 68, 0.2); }
+    
+    /* NEW: SVG Icon styling inside cards */
+    .card-icon { 
+      width: 48px; 
+      height: 48px; 
+      background: rgba(2, 117, 255, 0.2); 
+      border-radius: 12px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      margin-bottom: 20px;
+      color: #1aa6f8;
+    }
+
+    .card h3 { font-size: 22px; margin-bottom: 15px; color: #ffffff; }
+    .card p { color: rgba(255,255,255,0.75); line-height: 1.7; font-size: 15px; }
+
+    /* CTA SECTION */
+    .cta { 
+      padding: 80px 20px; 
+      background: var(--glass-card); 
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      text-align: center; 
+      margin-top: 40px;
+    }
+    .cta h2 { font-size: 36px; margin-bottom: 15px; color: #ffffff; }
+    .cta p { color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 18px; }
+    .cta .btn-white { border-color: #ffffff; background: white; color: var(--primary); border: none; }
+    .cta .btn-white:hover { background: #ecf0f1; color: var(--primary-hover); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255,255,255,0.2); }
+
+    /* FOOTER */
+    footer { background: rgba(10, 22, 55, 0.4); padding: 40px 0; text-align: center; font-size: 14px; color: rgba(255,255,255,0.6); border-top: 1px solid rgba(255,255,255,0.05); }
+    footer .container { flex-direction: column; justify-content: center; }
+    
+    .footer-verify { margin-top: 15px; }
+    .footer-verify a {
+      color: rgba(255,255,255,0.7); 
+      text-decoration: none; 
+      font-size: 13px; 
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      transition: 0.2s;
+    }
+    .footer-verify a:hover { color: #1aa6f8; border-color: #1aa6f8; }
+
+    /* RESPONSIVE */
+    @media(max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    @media(max-width: 768px) { 
+      .hero h1 { font-size: 40px; } 
+      .hero-btns { flex-direction: column; align-items: center; } 
+      .nav { display: none; } 
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="container">
       <div class="logo">
-        <img src="logo.jpg" alt="Logo" style="width:80px;height:60px;border-radius:8px;object-fit:cover; border:2px solid var(--primary);">
-        Purok C - Barangay Request System
+        <img src="logo.jpg" alt="Logo" onerror="this.src='https://placehold.co/70x50/ffffff/0275ff?text=Brgy'">
+        eBarangay Borongan
       </div>
       <div class="nav">
         <a href="#gwtd">About</a>
@@ -63,7 +187,7 @@
 
   <section class="hero">
     <h1>Government <span>With</span> The People</h1>
-    <p>Bringing barangay services closer to you. Request documents, file complaints, and get updates - all online.</p>
+    <p>Bringing barangay services closer to you. Request documents, upload requirements, and track your applications—all online.</p>
     <div class="hero-btns">
       <a href="register.html" class="btn">Get Started</a>
       <a href="#gwtd" class="btn-white">Learn More</a>
@@ -71,22 +195,41 @@
   </section>
 
   <section class="gwtd" id="gwtd">
-    <div class="container" style="flex-direction:column;">
-      <h2 class="section-title">Government With The People</h2>
-      <p class="section-sub">Our mission is to make public service faster, transparent, and accessible for every resident.</p>
-      <div class="grid">
-        <div class="card">
-          <h3>📄 Online Requests</h3>
-          <p>No more pila. Request Barangay Clearance, Residency, and Indigency certificates online and get notified when ready.</p>
+    <h2 class="section-title">A Modern Barangay Experience</h2>
+    <p class="section-sub">Our mission is to make public service faster, transparent, and accessible for every resident of Borongan City.</p>
+    
+    <div class="grid">
+      <!-- Card 1: Online Requests -->
+      <div class="card">
+        <div class="card-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
         </div>
-        <div class="card">
-          <h3>📢 Announcements</h3>
-          <p>Stay updated with the latest barangay news, events, and emergency advisories straight to your dashboard.</p>
+        <h3>Online Requests</h3>
+        <p>No more long lines. Request Barangay Clearance, Residency, and Indigency certificates online and get notified when they are ready for pickup.</p>
+      </div>
+
+      <!-- Card 2: QR Verification -->
+      <div class="card">
+        <div class="card-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+          </svg>
         </div>
-        <div class="card">
-          <h3>🤝 Transparent Service</h3>
-          <p>Track your requests in real-time. We believe in open and accountable governance for the people.</p>
+        <h3>QR Verification</h3>
+        <p>Every document generated includes a unique QR code. Employers and officials can instantly verify the authenticity of your certificate.</p>
+      </div>
+
+      <!-- Card 3: Transparent Service -->
+      <div class="card">
+        <div class="card-icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
         </div>
+        <h3>Transparent Service</h3>
+        <p>Track your requests in real-time with our status tracker. We believe in open, accountable, and technology-driven governance.</p>
       </div>
     </div>
   </section>
@@ -98,9 +241,13 @@
   </section>
 
   <footer>
-    <div class="container" style="justify-content:center;flex-direction:column;">
+    <div class="container">
       <p>© 2026 Barangay Clearance &amp; Certificate Request System. All rights reserved.</p>
-      <p style="margin-top:10px;">Government With The People</p>
+      <p style="margin-top:10px; font-weight: 600; color: #1aa6f8;">Government With The People</p>
+      
+      <p class="footer-verify">
+        <a href="verify.html">Verify a Document</a>
+      </p>
     </div>
   </footer>
 </body>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule Pickup - eBarangay</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg-gradient: linear-gradient(135deg, #3b4b8b 0%, #2a68ba 45%, #1aa6f8 100%);
+    --glass-card: rgba(255, 255, 255, 0.11);
+    --glass-border: rgba(255, 255, 255, 0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+  
+  body { 
+    background: var(--bg-gradient); 
+    min-height: 100vh; 
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .card { 
+    background: var(--glass-card); 
+    backdrop-filter: blur(16px);
+    padding: 40px; 
+    border-radius: 22px; 
+    width: 100%; 
+    max-width: 480px; 
+    box-shadow: 0 28px 60px rgba(10, 22, 55, 0.45); 
+    border: 1px solid var(--glass-border);
+    text-align: center;
+  }
+
+  h2 { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
+  p.subtitle { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 25px; }
+
+  .form-group { margin-bottom: 20px; text-align: left; }
+  label { display: block; margin-bottom: 8px; color: rgba(255,255,255,0.9); font-weight: 600; font-size: 13px; }
+
+  input, select { 
+    width: 100%; padding: 14px 15px; background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; 
+    font-size: 15px; color: #ffffff; transition: 0.2s;
+  }
+  
+  input:focus, select:focus { outline: none; border-color: #1aa6f8; background: rgba(255, 255, 255, 0.15); }
+  select option { color: #000000; background: #ffffff; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.7; cursor: pointer; }
+
+  .btn { 
+    width: 100%; padding: 15px; background: #0275ff; color: white; 
+    border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; 
+    margin-top: 10px;
+  }
+  .btn:hover { background: #0060df; transform: translateY(-2px); }
+  .btn:disabled { background: #7f8c8d; cursor: not-allowed; transform: none; }
+
+  .btn-cancel { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); margin-top: 10px; }
+  .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+
+  .error { background: rgba(231, 76, 60, 0.2); color: #ff8e8e; border: 1px solid rgba(231, 76, 60, 0.4); padding: 12px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-size: 14px; display: none; }
+  .success { background: rgba(39, 174, 96, 0.2); color: #7bed9f; border: 1px solid rgba(39, 174, 96, 0.4); padding: 12px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-size: 14px; display: none; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Schedule Pickup</h2>
+  <p class="subtitle">Choose a date and time to claim your document.</p>
+
+  <div class="error" id="error-box"></div>
+  <div class="success" id="success-box"></div>
+
+  <form id="pickup-form" onsubmit="return saveSchedule(event)">
+    <div class="form-group">
+      <label>Select Date</label>
+      <input type="date" id="pickup-date" required>
+    </div>
+
+    <div class="form-group">
+      <label>Select Time</label>
+      <select id="pickup-time" required>
+        <option value="Morning (8:00 AM - 12:00 PM)">Morning (8:00 AM - 12:00 PM)</option>
+        <option value="Afternoon (1:00 PM - 5:00 PM)">Afternoon (1:00 PM - 5:00 PM)</option>
+      </select>
+    </div>
+
+    <button type="submit" id="submit-btn" class="btn">Confirm Schedule</button>
+    <button type="button" class="btn btn-cancel" onclick="window.location.href='resident_dashboard.html'">Cancel</button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://kbngzddelbmpdbhxevon.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_acy7Ulw_hTPGY4zPVSBUoA_xm0HeXb_';
+  const { createClient } = supabase;
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const reqId = urlParams.get('id');
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('pickup-date').setAttribute('min', today);
+
+  async function init() {
+    if (!reqId) {
+      alert("No Request ID provided.");
+      return;
+    }
+
+    // Check if a pickup already exists for this request
+    const { data, error } = await supabaseClient
+      .from('pickups')
+      .select('*')
+      .eq('request_id', reqId)
+      .single();
+
+    // If it exists, pre-fill the form (Edit Mode)
+    if (data) {
+      document.getElementById('pickup-date').value = data.pickup_date;
+      document.getElementById('pickup-time').value = data.pickup_time;
+      document.getElementById('submit-btn').textContent = 'Update Schedule';
+    }
+  }
+  init();
+
+  async function saveSchedule(e) {
+    e.preventDefault();
+    
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return;
+
+    const btn = document.getElementById('submit-btn');
+    const date = document.getElementById('pickup-date').value;
+    const time = document.getElementById('pickup-time').value;
+
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    // Check if row exists to decide between UPDATE or INSERT
+    const { data: existing } = await supabaseClient
+      .from('pickups')
+      .select('id')
+      .eq('request_id', reqId)
+      .single();
+
+    let error;
+
+    if (existing) {
+      // UPDATE EXISTING
+      const res = await supabaseClient
+        .from('pickups')
+        .update({ pickup_date: date, pickup_time: time })
+        .eq('request_id', reqId);
+      error = res.error;
+    } else {
+      // INSERT NEW
+      const res = await supabaseClient
+        .from('pickups')
+        .insert([{
+          request_id: reqId,
+          resident_id: session.user.id,
+          pickup_date: date,
+          pickup_time: time,
+          status: 'Scheduled'
+        }]);
+      error = res.error;
+    }
+
+    btn.disabled = false;
+    btn.textContent = existing ? 'Update Schedule' : 'Confirm Schedule';
+
+    if (error) {
+      document.getElementById('error-box').textContent = error.message;
+      document.getElementById('error-box').style.display = 'block';
+    } else {
+      document.getElementById('success-box').textContent = "✅ Pickup scheduled successfully! Redirecting...";
+      document.getElementById('success-box').style.display = 'block';
+      setTimeout(() => { window.location.href = 'resident_dashboard.html'; }, 1500);
+    }
+  }
+</script>
+</body>
+</html>
