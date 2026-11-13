@@ -4,9 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Payment - eBarangay</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
 <style>
   :root {
     --bg-gradient: linear-gradient(135deg, #3b4b8b 0%, #2a68ba 45%, #1aa6f8 100%);
@@ -43,18 +45,58 @@
   .amount-box { 
     background: rgba(255, 255, 255, 0.05); 
     border: 1px solid rgba(255, 255, 255, 0.1); 
-    padding: 25px; 
+    padding: 20px; 
     border-radius: 12px; 
     text-align: center; 
-    margin-bottom: 25px; 
+    margin-bottom: 20px; 
   }
   .amount-box h3 { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 5px; font-weight: normal; }
   .amount-box h1 { color: #27ae60; margin: 0; font-size: 42px; font-weight: 700; }
   .amount-box p { margin: 5px 0 0; color: rgba(255,255,255,0.6); font-size: 13px; }
 
+  /* QR Code Image Container */
+  #qrcode-container {
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    width: 240px; 
+    height: 240px;
+    margin: 0 auto 15px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #qrcode-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+
+  .gcash-info {
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .transfer-amount {
+    text-align: center;
+    color: #f39c12;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 20px;
+    background: rgba(243, 156, 18, 0.1);
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(243, 156, 18, 0.3);
+  }
+
   label { display: block; margin-bottom: 8px; color: rgba(255,255,255,0.9); font-weight: 600; font-size: 13px; }
   
-  select { 
+  input, select { 
     width: 100%; 
     padding: 14px 15px; 
     background: rgba(255, 255, 255, 0.08);
@@ -64,10 +106,10 @@
     color: #ffffff; 
     margin-bottom: 15px; 
     transition: 0.2s;
-    cursor: pointer;
   }
-  select:focus { outline: none; border-color: #1aa6f8; background: rgba(255, 255, 255, 0.15); }
+  input:focus, select:focus { outline: none; border-color: #1aa6f8; background: rgba(255, 255, 255, 0.15); }
   select option { color: #000000; background: #ffffff; }
+  input::placeholder { color: rgba(255,255,255,0.4); }
 
   /* Cash Notice Box */
   #cash-notice {
@@ -94,6 +136,7 @@
     font-weight: 600; 
     cursor: pointer; 
     transition: 0.3s; 
+    margin-top: 5px;
   }
   .btn:hover { background: #0060df; transform: translateY(-2px); }
   .btn:disabled { background: #7f8c8d; cursor: not-allowed; transform: none; }
@@ -118,23 +161,38 @@
   
   <div class="amount-box">
     <h3>Total Amount to Pay</h3>
-    <h1>₱ 50.00</h1>
+    <h1 id="display-amount">Loading...</h1>
     <p>For: Barangay Document Request</p>
   </div>
 
   <form onsubmit="return processPayment(event)">
+    
     <label>Select Payment Method</label>
     <select id="payment_method" required onchange="togglePaymentMethod()">
-      <option value="GCash">GCash (Pay Online)</option>
+      <option value="GCash">GCash (Scan QR Code)</option>
       <option value="Cash">Cash (Pay at Barangay Hall)</option>
     </select>
 
-    <!-- Notice shown only if Cash is selected -->
-    <div id="cash-notice">
-      <strong>Note:</strong> Please proceed to the Barangay Hall to pay the ₱50.00 fee. Your document will be released upon payment.
+    <!-- GCash Section -->
+    <div id="gcash-section">
+        <div id="qrcode-container">
+            <img src="gcash.jpg" alt="GCash QR Code" onerror="this.src='https://placehold.co/200x200/ffffff/000000?text=gcash.jpg+not+found'">
+        </div>
+        <div class="gcash-info">GCash No: 09363002122</div>
+        
+        <!-- NEW: Dynamic Amount to Transfer -->
+        <div class="transfer-amount" id="transfer-text">Amount to transfer: Loading...</div>
+
+        <label>Enter GCash Reference No.</label>
+        <input type="text" id="ref_no" placeholder="e.g. 10029384921">
     </div>
 
-    <button type="submit" id="pay-btn" class="btn">Pay Now via GCash</button>
+    <!-- Cash Section -->
+    <div id="cash-notice">
+      <strong>Note:</strong> Please proceed to the Barangay Hall to pay the exact amount. Your document will be released upon payment.
+    </div>
+
+    <button type="submit" id="pay-btn" class="btn">Confirm Payment</button>
     <button type="button" class="btn btn-cancel" onclick="window.location.href='resident_dashboard.html'">Cancel</button>
   </form>
 </div>
@@ -146,59 +204,89 @@
   const { createClient } = supabase;
   const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Get Request ID from URL
   const urlParams = new URLSearchParams(window.location.search);
   const reqId = urlParams.get('id');
+  let currentAmount = 0;
 
-  // Toggle UI based on selected method
+  // 1. Load Amount from Database
+  async function loadAmount() {
+      if(!reqId) {
+          alert("No request ID found.");
+          window.location.href = 'resident_dashboard.html';
+          return;
+      }
+      const { data, error } = await supabaseClient.from('requests').select('amount_to_pay').eq('id', reqId).single();
+      if(data) {
+          currentAmount = data.amount_to_pay || 50;
+          const formattedAmount = parseFloat(currentAmount).toFixed(2);
+          
+          // Update the big amount
+          document.getElementById('display-amount').textContent = `₱ ${formattedAmount}`;
+          
+          // Update the text below the QR code
+          document.getElementById('transfer-text').textContent = `Amount to transfer: ₱ ${formattedAmount}`;
+      }
+  }
+  loadAmount();
+
+  // 2. Toggle UI
   function togglePaymentMethod() {
     const method = document.getElementById('payment_method').value;
-    const notice = document.getElementById('cash-notice');
+    const cashNotice = document.getElementById('cash-notice');
+    const gcashSection = document.getElementById('gcash-section');
     const btn = document.getElementById('pay-btn');
 
     if (method === 'Cash') {
-      notice.style.display = 'block';
+      cashNotice.style.display = 'block';
+      gcashSection.style.display = 'none';
+      document.getElementById('ref_no').required = false;
       btn.textContent = 'Confirm Cash Pickup';
-      btn.style.background = '#d68910'; // Orange for cash
+      btn.style.background = '#d68910'; 
     } else {
-      notice.style.display = 'none';
-      btn.textContent = 'Pay Now via GCash';
-      btn.style.background = '#0275ff'; // Blue for GCash
+      cashNotice.style.display = 'none';
+      gcashSection.style.display = 'block';
+      document.getElementById('ref_no').required = true;
+      btn.textContent = 'Confirm GCash Payment';
+      btn.style.background = '#0275ff';
     }
   }
 
-  // Process Payment
+  // 3. Process Payment
   async function processPayment(e) {
     e.preventDefault();
-    if(!reqId) return alert("No request ID found.");
+    if(!reqId) return;
     
     const btn = document.getElementById('pay-btn');
     const method = document.getElementById('payment_method').value;
+    const refNo = document.getElementById('ref_no').value.trim();
+
+    if (method === 'GCash' && !refNo) {
+        alert("Please enter the GCash Reference Number.");
+        return false;
+    }
     
     btn.disabled = true;
-    btn.textContent = method === 'Cash' ? 'Processing...' : 'Connecting to GCash...';
+    btn.textContent = 'Processing...';
 
-    // Simulate delay
     setTimeout(async () => {
-      
-      // Determine if it should be marked as Paid (GCash) or Unpaid (Cash)
       const paymentStatus = method === 'GCash' ? 'Paid' : 'Unpaid';
+      
+      const updateData = { payment_status: paymentStatus };
+      if (method === 'GCash') {
+          updateData.notes = `GCash Ref: ${refNo}`; 
+      }
 
-      // Update DB
-      const { error } = await supabaseClient
-        .from('requests')
-        .update({ payment_status: paymentStatus })
-        .eq('id', reqId);
+      const { error } = await supabaseClient.from('requests').update(updateData).eq('id', reqId);
 
       if(error) {
         alert("Payment update failed: " + error.message);
         btn.disabled = false;
-        btn.textContent = method === 'Cash' ? 'Confirm Cash Pickup' : 'Pay Now via GCash';
+        btn.textContent = method === 'Cash' ? 'Confirm Cash Pickup' : 'Confirm GCash Payment';
       } else {
         if (method === 'GCash') {
-          alert(`✅ GCash Payment Successful!`);
+          alert(`✅ GCash Payment of ₱${parseFloat(currentAmount).toFixed(2)} Successful!\nRef No: ${refNo}`);
         } else {
-          alert(`✅ Cash option selected. Please pay at the Barangay Hall to claim your document.`);
+          alert(`✅ Cash option selected. Please pay ₱${parseFloat(currentAmount).toFixed(2)} at the Barangay Hall.`);
         }
         window.location.href = 'resident_dashboard.html';
       }

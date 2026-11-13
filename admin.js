@@ -6,6 +6,9 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentAdminId = null;
 let currentAdminName = '';
+let allRequestsData = [];
+let paymentData = [];
+let reportData = []; 
 
 // Global Init
 window.addEventListener('DOMContentLoaded', async () => {
@@ -26,7 +29,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     currentAdminId = session.user.id;
     
-    // Set admin name in sidebar safely
     const nameEl = document.getElementById('admin-name');
     if (nameEl) nameEl.textContent = currentAdminName;
 
@@ -34,6 +36,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('admin-table-body')) initAdminDashboard();
     if (document.getElementById('upload-form')) initAdminUpload();
     if (document.getElementById('log-body')) initAuditLogs();
+    if (document.getElementById('report-table-body')) initAdminReports();
+    if (document.getElementById('payment-table-body')) initAdminPaymentRecords(); // NEW
 });
 
 async function handleLogout(e) {
@@ -46,13 +50,16 @@ async function handleLogout(e) {
 // 1. ADMIN DASHBOARD LOGIC
 // =========================================
 async function initAdminDashboard() {
-    fetchRequests();
+    await fetchRequests();
     fetchDocCount();
+    
+    document.getElementById('search-input').addEventListener('input', filterAndRenderTable);
+    document.getElementById('status-filter').addEventListener('change', filterAndRenderTable);
 }
 
 async function fetchRequests() {
     const tbody = document.getElementById('admin-table-body');
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">Loading data from database...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Loading data...</td></tr>`;
 
     const { data, error } = await supabaseClient
         .from('requests')
@@ -60,62 +67,92 @@ async function fetchRequests() {
         .order('date_requested', { ascending: false });
 
     if (error) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ff6b6b;">Failed to load data: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ff6b6b;">Failed to load data: ${error.message}</td></tr>`;
         return;
     }
 
-    const table = document.getElementById('requests-table');
-    const emptyState = document.getElementById('empty-state');
-    let pending = 0, ready = 0, approved = 0;
+    allRequestsData = data; 
+    filterAndRenderTable(); 
+}
 
-    if (data.length > 0) {
-        tbody.innerHTML = '';
-        data.forEach(req => {
-            if(req.status === 'Pending') pending++;
-            if(req.status === 'Approved') approved++;
+function filterAndRenderTable() {
+    const tbody = document.getElementById('admin-table-body');
+    tbody.innerHTML = '';
 
-            const pickupData = req.pickups && req.pickups.length > 0 ? req.pickups[0] : null;
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('status-filter').value;
 
-            let pickupHtml = '<span style="color: rgba(255,255,255,0.3); font-size: 12px;">Not Scheduled</span>';
-            if (pickupData) {
-                const pDate = new Date(pickupData.pickup_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-                pickupHtml = `
-                    <div style="font-size: 12px; font-weight: bold; color: #2ecc71;">${pDate}</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.7);">${pickupData.pickup_time}</div>
-                `;
-            }
+    const filteredData = allRequestsData.filter(req => {
+        const matchesSearch = req.fullname.toLowerCase().includes(searchTerm);
+        const matchesStatus = statusFilter === '' || req.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
-            let actionHtml = '';
-            if (req.status === 'Pending') {
-                actionHtml = `
-                    <button class="btn-sm btn-approve" onclick="updateStatus(${req.id}, 'Approved', this)">Approve</button>
-                    <button class="btn-sm btn-reject" onclick="updateStatus(${req.id}, 'Rejected', this)">Reject</button>
-                `;
-            } else if (req.status === 'Approved') {
-                actionHtml = `<a href="generate_pdf.html?id=${req.id}" target="_blank" class="btn-sm btn-pdf">View PDF</a>`;
-            } else {
-                actionHtml = `<span style="color: rgba(255,255,255,0.4); font-size: 12px;">Completed</span>`;
-            }
+    let pending = 0;
+    allRequestsData.forEach(req => { if(req.status === 'Pending') pending++; });
+    document.getElementById('total-req').textContent = allRequestsData.length;
+    document.getElementById('pending-req').textContent = pending;
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>#${req.id}</td>
-                <td class="font-medium">${req.fullname}</td>
-                <td>${req.doc_type}</td>
-                <td><span class="status ${req.status}">${req.status}</span></td>
-                <td>${pickupHtml}</td>
-                <td>${actionHtml}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        document.getElementById('total-req').textContent = data.length;
-        document.getElementById('pending-req').textContent = pending;
-        if(table) table.style.display = 'table';
-    } else {
-        if(table) table.style.display = 'none';
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 25px; color: rgba(255,255,255,0.5);">No requests found.</td></tr>`;
+    if (filteredData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 25px; color: rgba(255,255,255,0.5);">No requests found matching your filters.</td></tr>`;
+        return;
     }
+
+    filteredData.forEach(req => {
+        const pickupData = req.pickups && req.pickups.length > 0 ? req.pickups[0] : null;
+
+        let pickupHtml = '<span style="color: rgba(255,255,255,0.3); font-size: 12px;">Not Scheduled</span>';
+        if (pickupData) {
+            const pDate = new Date(pickupData.pickup_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+            pickupHtml = `
+                <div style="font-size: 12px; font-weight: bold; color: #2ecc71;">${pDate}</div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.7);">${pickupData.pickup_time}</div>
+            `;
+        }
+
+        let paymentHtml = '';
+        if (req.payment_status === 'Paid') {
+            paymentHtml = `
+                <span style="background: rgba(39, 174, 96, 0.3); color: #2ecc71; border: 1px solid #2ecc71; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold;">Paid (₱${req.amount_to_pay || 0})</span>
+                <select class="update-select" style="margin-top: 5px; font-size: 10px;" onchange="updatePaymentStatus(${req.id}, this.value)">
+                    <option value="Paid" selected>Paid</option>
+                    <option value="Unpaid">Mark as Unpaid</option>
+                </select>
+            `;
+        } else {
+            paymentHtml = `
+                <span style="background: rgba(231, 76, 60, 0.3); color: #e74c3c; border: 1px solid #e74c3c; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold;">Unpaid (₱${req.amount_to_pay || 0})</span>
+                <select class="update-select" style="margin-top: 5px; font-size: 10px;" onchange="updatePaymentStatus(${req.id}, this.value)">
+                    <option value="Unpaid" selected>Unpaid</option>
+                    <option value="Paid">Mark as Paid</option>
+                </select>
+            `;
+        }
+
+        let actionHtml = '';
+        if (req.status === 'Pending') {
+            actionHtml = `
+                <button class="btn-sm btn-approve" onclick="updateStatus(${req.id}, 'Approved', this)">Approve & Set Fee</button>
+                <button class="btn-sm btn-reject" onclick="updateStatus(${req.id}, 'Rejected', this)">Reject</button>
+            `;
+        } else if (req.status === 'Approved') {
+            actionHtml = `<a href="generate_pdf.html?id=${req.id}" target="_blank" class="btn-sm btn-pdf">View PDF</a>`;
+        } else {
+            actionHtml = `<span style="color: rgba(255,255,255,0.4); font-size: 12px;">Completed</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>#${req.id}</td>
+            <td class="font-medium">${req.fullname}</td>
+            <td>${req.doc_type}</td>
+            <td><span class="status ${req.status}">${req.status}</span></td>
+            <td>${paymentHtml}</td>
+            <td>${pickupHtml}</td>
+            <td>${actionHtml}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 async function fetchDocCount() {
@@ -126,11 +163,23 @@ async function fetchDocCount() {
 }
 
 async function updateStatus(id, newStatus, btnElement) {
-    if (!confirm(`Are you sure you want to mark request #${id} as ${newStatus}?`)) return;
+    let amountToPay = null;
+    if (newStatus === 'Approved') {
+        const input = prompt("Enter the fee amount (₱) for this document:", "50");
+        if (input === null) return; 
+        amountToPay = parseFloat(input);
+        if (isNaN(amountToPay) || amountToPay < 0) { alert("Invalid amount."); return; }
+    } else {
+        if (!confirm(`Are you sure you want to mark request #${id} as ${newStatus}?`)) return;
+    }
+
     btnElement.textContent = '...';
     btnElement.disabled = true;
 
-    const { error } = await supabaseClient.from('requests').update({ status: newStatus }).eq('id', id);
+    const updateData = { status: newStatus };
+    if (amountToPay !== null) updateData.amount_to_pay = amountToPay;
+
+    const { error } = await supabaseClient.from('requests').update(updateData).eq('id', id);
 
     if (error) {
         alert("Database Error: " + error.message);
@@ -138,7 +187,22 @@ async function updateStatus(id, newStatus, btnElement) {
     } else {
         await supabaseClient.from('audit_logs').insert([{
             admin_name: currentAdminName,
-            action: `Marked Request #${id} as ${newStatus}`,
+            action: `Marked Request #${id} as ${newStatus}` + (amountToPay !== null ? ` with fee ₱${amountToPay}` : ''),
+            target_id: 'Request #' + id
+        }]);
+        fetchRequests();
+    }
+}
+
+async function updatePaymentStatus(id, newStatus) {
+    const { error } = await supabaseClient.from('requests').update({ payment_status: newStatus }).eq('id', id);
+
+    if (error) {
+        alert("Database Error: " + error.message);
+    } else {
+        await supabaseClient.from('audit_logs').insert([{
+            admin_name: currentAdminName,
+            action: `Manually marked payment for Request #${id} as ${newStatus}`,
             target_id: 'Request #' + id
         }]);
         fetchRequests();
@@ -146,10 +210,90 @@ async function updateStatus(id, newStatus, btnElement) {
 }
 
 // =========================================
-// 2. UPLOAD LOGIC
+// 2. PAYMENT RECORDS LOGIC
+// =========================================
+async function initAdminPaymentRecords() {
+    const tbody = document.getElementById('payment-table-body');
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Loading data...</td></tr>`;
+
+    const { data, error } = await supabaseClient
+        .from('requests')
+        .select('*')
+        .order('date_requested', { ascending: false });
+
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">${error.message}</td></tr>`;
+        return;
+    }
+
+    paymentData = data;
+    tbody.innerHTML = '';
+
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">No transaction records found.</td></tr>`;
+        return;
+    }
+
+    data.forEach(req => {
+        const reqDate = new Date(req.date_requested).toLocaleDateString();
+        
+        let refNo = 'N/A';
+        let method = 'N/A';
+        if (req.notes && req.notes.includes('GCash Ref:')) {
+            refNo = req.notes.replace('GCash Ref:', '').trim();
+            method = 'GCash';
+        } else if (req.payment_status === 'Paid') {
+            method = 'Cash (Walk-in)';
+        }
+
+        const statusColor = req.payment_status === 'Paid' ? '#2ecc71' : '#e74c3c';
+
+        tbody.innerHTML += `
+            <tr>
+                <td>#${req.id}</td>
+                <td class="font-medium">${req.fullname}</td>
+                <td>${req.doc_type}</td>
+                <td class="font-bold text-green-400">₱${parseFloat(req.amount_to_pay || 0).toFixed(2)}</td>
+                <td>
+                    <div style="font-size: 12px; font-weight: bold; color: #1aa6f8;">${method}</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.7);">${refNo}</div>
+                </td>
+                <td><span style="color: ${statusColor}; font-weight: bold;">${req.payment_status}</span></td>
+                <td>${reqDate}</td>
+            </tr>
+        `;
+    });
+}
+
+function exportPaymentCSV() {
+    if(paymentData.length === 0) return alert("No data to export.");
+    
+    let csv = "Request #,Resident Name,Document Type,Amount,Method,Reference No,Status,Date\n";
+    
+    paymentData.forEach(req => {
+        const reqDate = new Date(req.date_requested).toLocaleDateString();
+        let refNo = 'N/A';
+        let method = 'N/A';
+        if (req.notes && req.notes.includes('GCash Ref:')) {
+            refNo = req.notes.replace('GCash Ref:', '').trim();
+            method = 'GCash';
+        } else if (req.payment_status === 'Paid') {
+            method = 'Cash';
+        }
+        
+        csv += `"${req.id}","${req.fullname}","${req.doc_type}","${req.amount_to_pay || 0}","${method}","${refNo}","${req.payment_status}","${reqDate}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `payment_records_${Date.now()}.csv`; a.click();
+}
+
+// =========================================
+// 3. UPLOAD LOGIC
 // =========================================
 async function initAdminUpload() {
-    // Load Requests for Dropdown
     const { data } = await supabaseClient.from('requests').select('id, doc_type, fullname').order('id', { ascending: false });
     const select = document.getElementById('request_id');
     select.innerHTML = '<option value="">-- Select Request --</option>';
@@ -246,7 +390,7 @@ async function deleteDoc(docId, storageFileName) {
 }
 
 // =========================================
-// 3. AUDIT LOGS LOGIC
+// 4. AUDIT LOGS LOGIC
 // =========================================
 let logsData = [];
 async function initAuditLogs() {
@@ -277,6 +421,71 @@ function exportCSV() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `audit_logs_${Date.now()}.csv`; a.click();
+}
+
+// =========================================
+// 5. REPORTS LOGIC
+// =========================================
+async function initAdminReports() {
+    const tbody = document.getElementById('report-table-body');
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Loading data...</td></tr>`;
+
+    const { data, error } = await supabaseClient
+        .from('requests')
+        .select(`*, pickups ( pickup_date, pickup_time )`)
+        .order('date_requested', { ascending: false });
+
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">${error.message}</td></tr>`;
+        return;
+    }
+
+    reportData = data;
+    tbody.innerHTML = '';
+
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">No report data found.</td></tr>`;
+        return;
+    }
+
+    data.forEach(req => {
+        const pickupData = req.pickups && req.pickups.length > 0 ? req.pickups[0] : null;
+        const reqDate = new Date(req.date_requested).toLocaleDateString();
+        const pickupDate = pickupData ? new Date(pickupData.pickup_date).toLocaleDateString() : 'N/A';
+        const pickupTime = pickupData ? pickupData.pickup_time : 'N/A';
+
+        tbody.innerHTML += `
+            <tr>
+                <td>#${req.id}</td>
+                <td class="font-medium">${req.fullname}</td>
+                <td>${req.doc_type}</td>
+                <td>${reqDate}</td>
+                <td><span class="status ${req.status}">${req.status}</span></td>
+                <td>${pickupDate}</td>
+                <td>${pickupTime}</td>
+            </tr>
+        `;
+    });
+}
+
+function exportReportCSV() {
+    if(reportData.length === 0) return alert("No data to export.");
+    
+    let csv = "Request #,Resident Name,Document Type,Date Requested,Status,Pickup Date,Pickup Time\n";
+    
+    reportData.forEach(req => {
+        const pickupData = req.pickups && req.pickups.length > 0 ? req.pickups[0] : null;
+        const reqDate = new Date(req.date_requested).toLocaleDateString();
+        const pickupDate = pickupData ? new Date(pickupData.pickup_date).toLocaleDateString() : 'N/A';
+        const pickupTime = pickupData ? pickupData.pickup_time : 'N/A';
+        
+        csv += `"${req.id}","${req.fullname}","${req.doc_type}","${reqDate}","${req.status}","${pickupDate}","${pickupTime}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `requests_report_${Date.now()}.csv`; a.click();
 }
 
 function showAlert(id, msg) {

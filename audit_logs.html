@@ -25,6 +25,16 @@
             <span>Manage Documents</span>
           </li>
 
+          <li class="nav-item" onclick="window.location.href='admin_paymentrecord.html'">
+            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm1 1v12h12V4H4zM2 18a1 1 0 011-1h16a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1v-4z" clip-rule="evenodd" /><path d="M6 6h2v2H6V6zm0 3h2v2H6V9zm0 3h2v2H6v-2zm3-6h5v2H9V6zm0 3h5v2H9V9zm0 3h5v2H9v-2z" /></svg></span>
+            <span>Payment Records</span>
+          </li>
+
+          <li class="nav-item" onclick="window.location.href='admin_report.html'">
+            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zM12 9.75a.75.75 0 000 1.5h3a.75.75 0 000-1.5h-3zm0 3a.75.75 0 000 1.5h3a.75.75 0 000-1.5h-3zm-3.75-.75a.75.75 0 100-1.5.75.75 0 000 1.5zm0 3a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" /></svg></span>
+            <span>Reports</span>
+          </li>
+
           <li class="nav-item active">
             <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zM12 9.75a.75.75 0 000 1.5h3a.75.75 0 000-1.5h-3zm0 3a.75.75 0 000 1.5h3a.75.75 0 000-1.5h-3zm-3.75-.75a.75.75 0 100-1.5.75.75 0 000 1.5zm0 3a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" /></svg></span>
             <span>System Logs</span>
@@ -46,7 +56,10 @@
 
     <main class="main-content">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="header-title">System Audit Logs</h2>
+        <div>
+          <h2 class="header-title">System Audit Logs</h2>
+          <p class="header-subtitle">Track all administrator actions and updates.</p>
+        </div>
         <button onclick="exportCSV()" class="btn-primary" style="width: auto; padding: 10px 20px;">⬇️ Export CSV</button>
       </div>
 

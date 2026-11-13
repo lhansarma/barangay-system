@@ -19,13 +19,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     currentUserSession = session;
     const fullName = session.user.user_metadata?.full_name || session.user.email;
     
-    // Set Sidebar Name if it exists
+    // Set Sidebar Name
     const nameEl = document.getElementById('user-name');
     const nameTopEl = document.getElementById('user-name-top');
     if (nameEl) nameEl.textContent = fullName;
     if (nameTopEl) nameTopEl.textContent = fullName.split(' ')[0];
 
-    // Route to specific page logic based on what's on the DOM
+    // Route to specific page logic
     if (document.getElementById('table-body')) loadDashboard();
     if (document.getElementById('request-form')) initRequestForm();
     if (document.getElementById('upload-form')) initUploadForm();
@@ -43,7 +43,7 @@ async function handleLogout(e) {
 // =========================================
 async function loadDashboard() {
     const tbody = document.getElementById('table-body');
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">Loading...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">Loading...</td></tr>`;
 
     const { data, error } = await supabaseClient
         .from('requests')
@@ -52,7 +52,7 @@ async function loadDashboard() {
         .order('date_requested', { ascending: false });
 
     if (error) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">${error.message}</td></tr>`;
         return;
     }
 
@@ -69,6 +69,15 @@ async function loadDashboard() {
 
             const pickupData = req.pickups && req.pickups.length > 0 ? req.pickups[0] : null;
 
+            // --- PAYMENT STATUS COLUMN ---
+            let paymentHtml = '';
+            if (req.payment_status === 'Paid') {
+                paymentHtml = `<span style="color: #2ecc71; font-weight: bold; font-size: 13px;">✅ Paid (₱${req.amount_to_pay || 0})</span>`;
+            } else {
+                paymentHtml = `<span style="color: #e74c3c; font-weight: bold; font-size: 13px;">❌ Unpaid (₱${req.amount_to_pay || 0})</span>`;
+            }
+
+            // --- PICKUP SCHEDULE COLUMN ---
             let pickupHtml = '<span style="color: rgba(255,255,255,0.3); font-size: 12px;">Not Scheduled</span>';
             if (pickupData) {
                 const pDate = new Date(pickupData.pickup_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
@@ -79,12 +88,22 @@ async function loadDashboard() {
                 `;
             }
 
+            // --- ACTION COLUMN (FIXED LOGIC) ---
             let actionHtml = `<span style="color: rgba(255,255,255,0.4); font-size: 12px;">No Action Needed</span>`;
+            
             if (req.status === 'Approved') {
+                actionHtml = '';
+                
+                // 1. Show Pay button if Unpaid
+                if (req.payment_status !== 'Paid') {
+                    actionHtml += `<a href="payment.html?id=${req.id}" class="btn-action btn-pay" style="background: #f39c12; color: white; margin-right: 5px; margin-bottom: 5px;">Pay ₱${req.amount_to_pay || 0}</a>`;
+                }
+
+                // 2. Show Set Pickup button if no pickup scheduled
                 if (!pickupData) {
-                    actionHtml = `<a href="pickup.html?id=${req.id}" class="btn-action btn-pickup">Set Pickup</a>`;
+                    actionHtml += `<a href="pickup.html?id=${req.id}" class="btn-action btn-pickup" style="margin-bottom: 5px;">Set Pickup</a>`;
                 } else {
-                    actionHtml = `<span style="color: #2ecc71; font-size: 12px; font-weight: bold;">Ready for Pickup</span>`;
+                    actionHtml += `<span style="color: #2ecc71; font-size: 12px; font-weight: bold; display: block; margin-top: 5px;">Ready for Pickup</span>`;
                 }
             }
 
@@ -93,6 +112,7 @@ async function loadDashboard() {
                 <td>#BRGY-${req.id}</td>
                 <td class="font-medium">${req.doc_type}</td>
                 <td><span class="status ${req.status}">${req.status}</span></td>
+                <td>${paymentHtml}</td>
                 <td>${pickupHtml}</td>
                 <td>${actionHtml}</td>
             `;
@@ -153,7 +173,9 @@ async function handleRequest(e) {
         years_residency: document.getElementById('years_residency').value || null,
         notes: document.getElementById('notes').value,
         purpose: document.getElementById('purpose_input').value,
-        status: 'Pending'
+        status: 'Pending',
+        payment_status: 'Unpaid',
+        amount_to_pay: 0 
     }]);
 
     btn.disabled = false; btn.textContent = 'Submit Request';
@@ -253,9 +275,10 @@ async function handleUpload(e) {
 }
 
 // =========================================
-// 4. PROFILE LOGIC
+// 4. PROFILE LOGIC (FIXED UPDATE)
 // =========================================
 function initProfileForm() {
+    // Refresh the session to get the latest metadata
     const meta = currentUserSession.user.user_metadata || {};
     const fullName = meta.full_name || currentUserSession.user.email;
 
@@ -263,17 +286,25 @@ function initProfileForm() {
     document.getElementById('profile-name').textContent = fullName;
     document.getElementById('profile-email').textContent = currentUserSession.user.email;
     document.getElementById('val-role').textContent = meta.role === 'admin' ? 'Administrator' : 'Resident';
+    
+    // Values Display
     document.getElementById('val-contact').textContent = meta.contact_number || 'N/A';
     document.getElementById('val-gender').textContent = meta.gender || 'N/A';
     document.getElementById('val-address').textContent = meta.address || 'N/A';
     
+    // Values for Inputs
     document.getElementById('edit-contact').value = meta.contact_number || '';
     document.getElementById('edit-gender').value = meta.gender || 'Male';
     document.getElementById('edit-address').value = meta.address || '';
     document.getElementById('edit-birthdate').value = meta.birthdate || '';
 
     let bdate = meta.birthdate || 'N/A';
-    if (bdate !== 'N/A') bdate = new Date(bdate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    if (bdate !== 'N/A') {
+        // Fix timezone offset issue when formatting
+        const d = new Date(bdate);
+        d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+        bdate = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
     document.getElementById('val-birthdate').textContent = bdate;
 }
 
@@ -290,23 +321,36 @@ async function saveProfile(e) {
     const btnSave = document.getElementById('btn-save');
     btnSave.disabled = true; btnSave.textContent = 'Saving...';
 
-    const { error } = await supabaseClient.auth.updateUser({
+    const newContact = document.getElementById('edit-contact').value.trim();
+    const newGender = document.getElementById('edit-gender').value;
+    const newAddress = document.getElementById('edit-address').value.trim();
+    const newBirthdate = document.getElementById('edit-birthdate').value;
+
+    // Update Supabase Auth
+    const { data, error } = await supabaseClient.auth.updateUser({
         data: {
-            contact_number: document.getElementById('edit-contact').value.trim(),
-            gender: document.getElementById('edit-gender').value,
-            address: document.getElementById('edit-address').value.trim(),
-            birthdate: document.getElementById('edit-birthdate').value
+            contact_number: newContact,
+            gender: newGender,
+            address: newAddress,
+            birthdate: newBirthdate
         }
     });
 
     btnSave.disabled = false; btnSave.textContent = '💾 Save Changes';
 
-    if (error) alert("Error updating profile: " + error.message);
-    else {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        currentUserSession = session;
+    if (error) {
+        alert("Error updating profile: " + error.message);
+    } else {
+        // FIXED: Update the local session variable with the new data so the UI reflects it immediately
+        if (data && data.user) {
+            currentUserSession = { ...currentUserSession, user: data.user };
+        }
+        
+        // Re-render the profile data
         initProfileForm();
         toggleEditMode(false);
+        
+        // Show success message
         document.getElementById('success-alert').style.display = 'block';
         setTimeout(() => { document.getElementById('success-alert').style.display = 'none'; }, 3000);
     }
