@@ -38,10 +38,11 @@
           <li class="nav-item" onclick="window.location.href='resident-upload.html'">
             <span class="nav-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path fill-rule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l4.5 4.5a.75.75 0 01-1.06 1.06l-3.22-3.22V16.5a.75.75 0 01-1.5 0V4.81L8.03 8.03a.75.75 0 01-1.06-1.06l4.5-4.5zM3 15.75a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z" clip-rule="evenodd" />
+                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm1 1v12h12V4H4zM2 18a1 1 0 011-1h16a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1v-4z" clip-rule="evenodd" />
+                <path d="M6 6h2v2H6V6zm0 3h2v2H6V9zm0 3h2v2H6v-2zm3-6h5v2H9V6zm0 3h5v2H9V9zm0 3h5v2H9v-2z" />
               </svg>
             </span>
-            <span>Upload Files</span>
+            <span>Received Docs</span>
           </li>
 
           <li class="nav-item" onclick="window.location.href='resident-profile.html'">
@@ -72,7 +73,7 @@
           <h1 class="header-title">Welcome Back, <span id="user-name-top">Resident</span></h1>
           <p class="header-subtitle">Track your document requests and status updates here.</p>
         </div>
-        <a href="resident-request.html" class="btn-action btn-success">+ New Request</a>
+        <a href="resident-request.html" class="btn-action btn-success" style="padding: 10px 20px;">+ New Request</a>
       </header>
 
       <section class="stats-grid">
@@ -103,7 +104,7 @@
                 <th>Request ID</th>
                 <th>Document Type</th>
                 <th>Status</th>
-                <th>Payment Status</th> <!-- NEW COLUMN -->
+                <th>Payment Status</th>
                 <th>Pickup Schedule</th>
                 <th>Action</th>
               </tr>

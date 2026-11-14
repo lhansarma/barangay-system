@@ -7,6 +7,14 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="admin.css" />
+  <style>
+    /* Custom styles for the percentage bars */
+    .progress-bar-bg { background: rgba(255,255,255,0.1); border-radius: 99px; height: 12px; width: 100%; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; border-radius: 99px; transition: width 1s ease-in-out; }
+    .fill-green { background: #2ecc71; }
+    .fill-orange { background: #f39c12; }
+    .fill-red { background: #e74c3c; }
+  </style>
 </head>
 <body>
   <div class="dashboard-shell">
@@ -20,6 +28,11 @@
             <span>Admin Dashboard</span>
           </li>
           
+          <li class="nav-item" onclick="window.location.href='admin_residents.html'">
+            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" /></svg></span>
+            <span>Manage Residents</span>
+          </li>
+
           <li class="nav-item" onclick="window.location.href='admin_upload.html'">
             <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l4.5 4.5a.75.75 0 01-1.06 1.06l-3.22-3.22V16.5a.75.75 0 01-1.5 0V4.81L8.03 8.03a.75.75 0 01-1.06-1.06l4.5-4.5zM3 15.75a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg></span>
             <span>Manage Documents</span>
@@ -55,6 +68,8 @@
     </aside>
 
     <main class="main-content">
+      
+      <!-- REPORT SUMMARY ANALYTICS -->
       <div class="flex justify-between items-center mb-6">
         <div>
           <h2 class="header-title">Generated Reports</h2>
@@ -63,6 +78,54 @@
         <button onclick="exportReportCSV()" class="btn-primary" style="width: auto; padding: 10px 20px;">⬇️ Export to CSV</button>
       </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        
+        <!-- Card 1: Total Revenue -->
+        <div class="card" style="border-top-color: #2ecc71;">
+          <h3 style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 10px; text-transform: uppercase;">Total Revenue (Paid)</h3>
+          <p style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="total-revenue">₱0.00</p>
+          <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 5px;">From successfully paid requests</p>
+        </div>
+
+        <!-- Card 2: Total Requests & Approval Rate -->
+        <div class="card" style="border-top-color: #3498db;">
+          <h3 style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 10px; text-transform: uppercase;">Total Requests</h3>
+          <p style="font-size: 32px; font-weight: bold; color: #ffffff;" id="total-requests">0</p>
+          <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 5px;">Approval Rate: <span id="approval-rate" style="color: #2ecc71; font-weight: bold;">0%</span></p>
+        </div>
+
+        <!-- Card 3: Status Breakdown Bar Chart -->
+        <div class="card" style="border-top-color: #f39c12; grid-column: span 1 / span 1;">
+          <h3 style="color: rgba(255,255,255,0.7); font-size: 13px; margin-bottom: 15px; text-transform: uppercase;">Status Breakdown</h3>
+          
+          <div style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+              <span style="color: #f39c12;">Pending</span>
+              <span id="pending-pct">0%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-fill fill-orange" id="pending-bar" style="width: 0%;"></div></div>
+          </div>
+
+          <div style="margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+              <span style="color: #2ecc71;">Approved</span>
+              <span id="approved-pct">0%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-fill fill-green" id="approved-bar" style="width: 0%;"></div></div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+              <span style="color: #e74c3c;">Rejected</span>
+              <span id="rejected-pct">0%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-fill fill-red" id="rejected-bar" style="width: 0%;"></div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MAIN DATA TABLE -->
       <div class="table-container">
         <div class="overflow-x-auto">
           <table id="report-table">
@@ -73,8 +136,8 @@
                 <th>Document Type</th>
                 <th>Date Requested</th>
                 <th>Status</th>
+                <th>Payment Status</th>
                 <th>Pickup Date</th>
-                <th>Pickup Time</th>
               </tr>
             </thead>
             <tbody id="report-table-body"></tbody>

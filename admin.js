@@ -37,7 +37,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('upload-form')) initAdminUpload();
     if (document.getElementById('log-body')) initAuditLogs();
     if (document.getElementById('report-table-body')) initAdminReports();
-    if (document.getElementById('payment-table-body')) initAdminPaymentRecords(); // NEW
+    if (document.getElementById('payment-table-body')) initAdminPaymentRecords();
+    if (document.getElementById('resident-table-body')) initAdminResidents();
 });
 
 async function handleLogout(e) {
@@ -59,7 +60,7 @@ async function initAdminDashboard() {
 
 async function fetchRequests() {
     const tbody = document.getElementById('admin-table-body');
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 20px;">Loading data...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 20px;">Loading data...</td></tr>`;
 
     const { data, error } = await supabaseClient
         .from('requests')
@@ -67,7 +68,7 @@ async function fetchRequests() {
         .order('date_requested', { ascending: false });
 
     if (error) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ff6b6b;">Failed to load data: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:#ff6b6b;">Failed to load data: ${error.message}</td></tr>`;
         return;
     }
 
@@ -94,7 +95,7 @@ function filterAndRenderTable() {
     document.getElementById('pending-req').textContent = pending;
 
     if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 25px; color: rgba(255,255,255,0.5);">No requests found matching your filters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 25px; color: rgba(255,255,255,0.5);">No requests found matching your filters.</td></tr>`;
         return;
     }
 
@@ -132,7 +133,7 @@ function filterAndRenderTable() {
         let actionHtml = '';
         if (req.status === 'Pending') {
             actionHtml = `
-                <button class="btn-sm btn-approve" onclick="updateStatus(${req.id}, 'Approved', this)">Approve & Set Fee</button>
+                <button class="btn-sm btn-approve" onclick="updateStatus(${req.id}, 'Approved', this)">Approve</button>
                 <button class="btn-sm btn-reject" onclick="updateStatus(${req.id}, 'Rejected', this)">Reject</button>
             `;
         } else if (req.status === 'Approved') {
@@ -141,11 +142,16 @@ function filterAndRenderTable() {
             actionHtml = `<span style="color: rgba(255,255,255,0.4); font-size: 12px;">Completed</span>`;
         }
 
+        const yearsText = req.years_residency ? `${req.years_residency} years` : 'N/A';
+        const notesText = req.notes ? req.notes : 'N/A';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>#${req.id}</td>
             <td class="font-medium">${req.fullname}</td>
             <td>${req.doc_type}</td>
+            <td>${yearsText}</td>
+            <td style="max-width: 150px; white-space: normal; font-size: 12px;">${notesText}</td>
             <td><span class="status ${req.status}">${req.status}</span></td>
             <td>${paymentHtml}</td>
             <td>${pickupHtml}</td>
@@ -210,7 +216,50 @@ async function updatePaymentStatus(id, newStatus) {
 }
 
 // =========================================
-// 2. PAYMENT RECORDS LOGIC
+// 2. ADMIN RESIDENTS LOGIC
+// =========================================
+async function initAdminResidents() {
+    const tbody = document.getElementById('resident-table-body');
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">Loading residents...</td></tr>`;
+
+    const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('role', 'resident')
+        .order('full_name', { ascending: true });
+
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">${error.message}</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = '';
+
+    if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No residents found.</td></tr>`;
+        return;
+    }
+
+    data.forEach(res => {
+        tbody.innerHTML += `
+            <tr>
+                <td class="font-medium">${res.full_name || 'N/A'}</td>
+                <td>${res.email || 'N/A'}</td>
+                <td>${res.contact_number || 'N/A'}</td>
+                <td>${res.address || 'N/A'}</td>
+                <td>${res.gender || 'N/A'}</td>
+                <td>
+                    <span style="background: rgba(39, 174, 96, 0.3); color: #2ecc71; border: 1px solid #2ecc71; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold;">
+                        ${res.role || 'resident'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// =========================================
+// 3. PAYMENT RECORDS LOGIC
 // =========================================
 async function initAdminPaymentRecords() {
     const tbody = document.getElementById('payment-table-body');
@@ -291,106 +340,200 @@ function exportPaymentCSV() {
 }
 
 // =========================================
-// 3. UPLOAD LOGIC
+// 4. UPLOAD LOGIC (FIXED)
 // =========================================
 async function initAdminUpload() {
-    const { data } = await supabaseClient.from('requests').select('id, doc_type, fullname').order('id', { ascending: false });
-    const select = document.getElementById('request_id');
-    select.innerHTML = '<option value="">-- Select Request --</option>';
-    if(data.length === 0) select.innerHTML += '<option value="" disabled>No requests found</option>';
-    else data.forEach(req => select.innerHTML += `<option value="${req.id}">Req #${req.id} - ${req.fullname} (${req.doc_type})</option>`);
-    
-    loadAllDocuments();
+    try {
+        // Load Requests for Dropdown
+        const { data, error } = await supabaseClient.from('requests').select('id, doc_type, fullname').order('id', { ascending: false });
+        
+        if (error) throw error;
+
+        const select = document.getElementById('request_id');
+        select.innerHTML = '<option value="">-- Select Request --</option>';
+        
+        if(data.length === 0) {
+            select.innerHTML += '<option value="" disabled>No requests found</option>';
+        } else {
+            data.forEach(req => {
+                select.innerHTML += `<option value="${req.id}">Req #${req.id} - ${req.fullname} (${req.doc_type})</option>`;
+            });
+        }
+        
+        loadAllDocuments();
+    } catch (err) {
+        console.error("Upload Init Error:", err);
+        alert("Error loading dropdown data: " + err.message);
+    }
 }
 
 async function loadAllDocuments() {
-    const { data, error } = await supabaseClient.from('documents').select(`*, requests ( fullname )`).order('id', { ascending: false });
-    const tbody = document.getElementById('docs-table-body');
-    tbody.innerHTML = '';
+    try {
+        const { data, error } = await supabaseClient
+            .from('documents')
+            .select(`*, requests ( fullname )`)
+            .order('id', { ascending: false });
+            
+        if (error) throw error;
 
-    if (error || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No documents uploaded yet.</td></tr>';
-        return;
+        const tbody = document.getElementById('docs-table-body');
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No documents uploaded yet.</td></tr>';
+            return;
+        }
+
+        data.forEach(doc => {
+            const fileUrl = doc.file_path;
+            const storageFileName = fileUrl ? fileUrl.split('/').pop() : ''; 
+            const residentName = doc.requests?.fullname || 'Unknown Resident';
+
+            const statusOptions = ['Pending', 'Approved', 'Rejected']
+                .map(s => `<option value="${s}" ${doc.status === s ? 'selected' : ''}>${s}</option>`)
+                .join('');
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>#${doc.request_id}</td>
+                    <td class="font-medium">${residentName}</td>
+                    <td>${doc.document_type}</td>
+                    <td>${doc.file_name}</td>
+                    <td>
+                        <select class="status-select" onchange="updateDocStatus(${doc.id}, this.value)">
+                            ${statusOptions}
+                        </select>
+                    </td>
+                    <td>
+                        <a href="${fileUrl}" target="_blank" class="btn-sm btn-view">View</a>
+                        <button onclick="deleteDoc(${doc.id}, '${storageFileName}')" class="btn-sm btn-delete">Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (err) {
+        console.error("Load Docs Error:", err);
+        const tbody = document.getElementById('docs-table-body');
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Failed to load: ${err.message}</td></tr>`;
     }
-
-    data.forEach(doc => {
-        const fileUrl = doc.file_path;
-        const storageFileName = fileUrl.split('/').pop(); 
-        const residentName = doc.requests?.fullname || 'Unknown Resident';
-
-        tbody.innerHTML += `
-            <tr>
-                <td>#${doc.request_id}</td>
-                <td class="font-medium">${residentName}</td>
-                <td>${doc.document_type}</td>
-                <td>${doc.file_name}</td>
-                <td><span class="status ${doc.status}">${doc.status}</span></td>
-                <td>
-                    <a href="${fileUrl}" target="_blank" class="btn-sm btn-view">View</a>
-                    <button onclick="editDocStatus(${doc.id}, '${doc.status}')" class="btn-sm btn-update">Update</button>
-                    <button onclick="deleteDoc(${doc.id}, '${storageFileName}')" class="btn-sm btn-delete">Delete</button>
-                </td>
-            </tr>
-        `;
-    });
 }
 
 async function handleUpload(e) {
     e.preventDefault();
+    
     const btn = document.getElementById('upload-btn');
-    btn.disabled = true; btn.textContent = 'Uploading...';
+    const errBox = document.getElementById('error-box');
+    const sucBox = document.getElementById('success-box');
+    
+    // Hide previous messages
+    errBox.style.display = 'none';
+    sucBox.style.display = 'none';
 
-    const reqId = document.getElementById('request_id').value;
-    const docType = document.getElementById('document_type').value;
-    const file = document.getElementById('document_file').files[0];
+    btn.disabled = true; 
+    btn.textContent = 'Uploading...';
 
-    if (!file) { showAlert('error-box', "Please select a file."); btn.disabled = false; btn.textContent = 'Upload Document'; return false; }
+    try {
+        const reqId = document.getElementById('request_id').value;
+        const docType = document.getElementById('document_type').value;
+        const file = document.getElementById('document_file').files[0];
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `admin_${currentAdminId}_${Date.now()}.${fileExt}`;
+        if (!file) throw new Error("Please select a file to upload.");
+        if (file.size > 5000000) throw new Error("File is too large. Maximum size is 5MB.");
 
-    const { error: uploadError } = await supabaseClient.storage.from('documents').upload(fileName, file);
-    if (uploadError) { showAlert('error-box', "Upload failed: " + uploadError.message); btn.disabled = false; btn.textContent = 'Upload Document'; return false; }
+        // Get the resident_id from the selected request
+        const { data: reqData, error: reqErr } = await supabaseClient
+            .from('requests')
+            .select('user_id')
+            .eq('id', reqId)
+            .single();
+        if (reqErr) throw reqErr;
 
-    const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
+        const fileExt = file.name.split('.').pop();
+        const fileName = `admin_${currentAdminId}_${Date.now()}.${fileExt}`;
 
-    const { error: dbError } = await supabaseClient.from('documents').insert([{
-        request_id: reqId, resident_id: currentAdminId, document_type: docType,
-        file_name: file.name, file_path: urlData.publicUrl, status: 'Pending'
-    }]);
+        // 1. Upload to Supabase Storage
+        const { error: uploadError } = await supabaseClient
+            .storage
+            .from('documents')
+            .upload(fileName, file);
+            
+        if (uploadError) {
+            if (uploadError.message.includes('Bucket not found')) {
+                throw new Error("Storage Bucket 'documents' not found. Please create a public bucket named 'documents' in Supabase Storage.");
+            }
+            throw uploadError;
+        }
 
-    btn.disabled = false; btn.textContent = 'Upload Document';
+        // 2. Get Public URL
+        const { data: urlData } = supabaseClient
+            .storage
+            .from('documents')
+            .getPublicUrl(fileName);
 
-    if (dbError) { showAlert('error-box', "DB error: " + dbError.message); }
-    else {
-        showAlert('success-box', `✅ Document uploaded to Request #${reqId}`);
+        // 3. Save Record to Database (resident_id = request owner so resident can see it)
+        const { error: dbError } = await supabaseClient
+            .from('documents')
+            .insert([{
+                request_id: reqId, 
+                resident_id: reqData.user_id, 
+                document_type: docType,
+                file_name: file.name, 
+                file_path: urlData.publicUrl, 
+                status: 'Pending'
+            }]);
+
+        if (dbError) throw dbError;
+
+        // Success
+        sucBox.textContent = `✅ Document uploaded successfully to Request #${reqId}`;
+        sucBox.style.display = 'block';
         document.getElementById('upload-form').reset();
         loadAllDocuments(); 
+
+    } catch (error) {
+        // Show Error message
+        errBox.textContent = error.message;
+        errBox.style.display = 'block';
+    } finally {
+        // Re-enable button
+        btn.disabled = false; 
+        btn.textContent = 'Upload Document';
     }
     return false;
 }
 
-async function editDocStatus(docId, currentStatus) {
-    const newStatus = prompt("Enter new status (Pending, Approved, Rejected):", currentStatus);
-    if (!newStatus) return;
-    const formattedStatus = newStatus.charAt(0).toUpperCase() + newStatus.slice(1).toLowerCase();
-    if (!['Pending', 'Approved', 'Rejected'].includes(formattedStatus)) { alert("Invalid status."); return; }
+async function updateDocStatus(docId, newStatus) {
+    const { error } = await supabaseClient
+        .from('documents')
+        .update({ status: newStatus })
+        .eq('id', docId);
 
-    const { error } = await supabaseClient.from('documents').update({ status: formattedStatus }).eq('id', docId);
-    if (error) alert("Error updating: " + error.message);
-    else loadAllDocuments();
+    if (error) {
+        alert("Error updating status: " + error.message);
+        loadAllDocuments(); // revert UI on failure
+    } else {
+        await supabaseClient.from('audit_logs').insert([{
+            admin_name: currentAdminName,
+            action: `Changed document #${docId} status to ${newStatus}`,
+            target_id: 'Document #' + docId
+        }]);
+    }
 }
 
 async function deleteDoc(docId, storageFileName) {
     if (!confirm("Are you sure you want to delete this document?")) return;
+    
     const { error: dbError } = await supabaseClient.from('documents').delete().eq('id', docId);
-    if (dbError) { alert("Failed to delete: " + dbError.message); return; }
-    await supabaseClient.storage.from('documents').remove([storageFileName]);
+    if (dbError) { alert("Failed to delete record: " + dbError.message); return; }
+    
+    if (storageFileName) {
+        await supabaseClient.storage.from('documents').remove([storageFileName]);
+    }
     loadAllDocuments();
 }
 
 // =========================================
-// 4. AUDIT LOGS LOGIC
+// 5. AUDIT LOGS LOGIC
 // =========================================
 let logsData = [];
 async function initAuditLogs() {
@@ -424,7 +567,7 @@ function exportCSV() {
 }
 
 // =========================================
-// 5. REPORTS LOGIC
+// 6. REPORTS LOGIC
 // =========================================
 async function initAdminReports() {
     const tbody = document.getElementById('report-table-body');
@@ -448,11 +591,44 @@ async function initAdminReports() {
         return;
     }
 
+    let totalRevenue = 0;
+    let totalRequests = data.length;
+    let pendingCount = 0;
+    let approvedCount = 0;
+    let rejectedCount = 0;
+
+    data.forEach(req => {
+        if (req.payment_status === 'Paid') totalRevenue += parseFloat(req.amount_to_pay || 0);
+        if (req.status === 'Pending') pendingCount++;
+        else if (req.status === 'Approved') approvedCount++;
+        else if (req.status === 'Rejected') rejectedCount++;
+    });
+
+    document.getElementById('total-revenue').textContent = `₱${totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    document.getElementById('total-requests').textContent = totalRequests;
+    
+    const approvalRate = totalRequests > 0 ? ((approvedCount / totalRequests) * 100).toFixed(1) : 0;
+    document.getElementById('approval-rate').textContent = `${approvalRate}%`;
+
+    const pendingPct = ((pendingCount / totalRequests) * 100).toFixed(1);
+    const approvedPct = ((approvedCount / totalRequests) * 100).toFixed(1);
+    const rejectedPct = ((rejectedCount / totalRequests) * 100).toFixed(1);
+
+    document.getElementById('pending-pct').textContent = `${pendingPct}% (${pendingCount})`;
+    document.getElementById('pending-bar').style.width = `${pendingPct}%`;
+
+    document.getElementById('approved-pct').textContent = `${approvedPct}% (${approvedCount})`;
+    document.getElementById('approved-bar').style.width = `${approvedPct}%`;
+
+    document.getElementById('rejected-pct').textContent = `${rejectedPct}% (${rejectedCount})`;
+    document.getElementById('rejected-bar').style.width = `${rejectedPct}%`;
+
     data.forEach(req => {
         const pickupData = req.pickups && req.pickups.length > 0 ? req.pickups[0] : null;
         const reqDate = new Date(req.date_requested).toLocaleDateString();
         const pickupDate = pickupData ? new Date(pickupData.pickup_date).toLocaleDateString() : 'N/A';
-        const pickupTime = pickupData ? pickupData.pickup_time : 'N/A';
+        
+        let payColor = req.payment_status === 'Paid' ? '#2ecc71' : '#e74c3c';
 
         tbody.innerHTML += `
             <tr>
@@ -461,8 +637,8 @@ async function initAdminReports() {
                 <td>${req.doc_type}</td>
                 <td>${reqDate}</td>
                 <td><span class="status ${req.status}">${req.status}</span></td>
+                <td><span style="color: ${payColor}; font-weight: bold;">${req.payment_status}</span></td>
                 <td>${pickupDate}</td>
-                <td>${pickupTime}</td>
             </tr>
         `;
     });
@@ -471,15 +647,14 @@ async function initAdminReports() {
 function exportReportCSV() {
     if(reportData.length === 0) return alert("No data to export.");
     
-    let csv = "Request #,Resident Name,Document Type,Date Requested,Status,Pickup Date,Pickup Time\n";
+    let csv = "Request #,Resident Name,Document Type,Date Requested,Status,Payment Status,Pickup Date\n";
     
     reportData.forEach(req => {
         const pickupData = req.pickups && req.pickups.length > 0 ? req.pickups[0] : null;
         const reqDate = new Date(req.date_requested).toLocaleDateString();
         const pickupDate = pickupData ? new Date(pickupData.pickup_date).toLocaleDateString() : 'N/A';
-        const pickupTime = pickupData ? pickupData.pickup_time : 'N/A';
         
-        csv += `"${req.id}","${req.fullname}","${req.doc_type}","${reqDate}","${req.status}","${pickupDate}","${pickupTime}"\n`;
+        csv += `"${req.id}","${req.fullname}","${req.doc_type}","${reqDate}","${req.status}","${req.payment_status}","${pickupDate}"\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv' });

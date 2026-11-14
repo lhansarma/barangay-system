@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upload Files - eBarangay</title>
+  <title>My Received Documents - eBarangay</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="resident.css" />
@@ -16,22 +16,42 @@
           <div class="active-indicator"></div>
           
           <li class="nav-item" onclick="window.location.href='resident_dashboard.html'">
-            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" /><path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" /></svg></span>
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" />
+                <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" />
+              </svg>
+            </span>
             <span>Dashboard</span>
           </li>
           
           <li class="nav-item" onclick="window.location.href='resident-request.html'">
-            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clip-rule="evenodd" /><path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375h1.875a5.23 5.23 0 013.434 1.279 9.72 9.72 0 00-6.963-6.963z" /></svg></span>
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0016.5 9h-1.875a1.875 1.875 0 01-1.875-1.875V5.25A3.75 3.75 0 009 1.5H5.625zM7.5 15a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5A.75.75 0 017.5 15zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H8.25z" clip-rule="evenodd" />
+                <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375h1.875a5.23 5.23 0 013.434 1.279 9.72 9.72 0 00-6.963-6.963z" />
+              </svg>
+            </span>
             <span>Request Document</span>
           </li>
           
           <li class="nav-item active">
-            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M11.47 2.47a.75.75 0 011.06 0l4.5 4.5a.75.75 0 01-1.06 1.06l-3.22-3.22V16.5a.75.75 0 01-1.5 0V4.81L8.03 8.03a.75.75 0 01-1.06-1.06l4.5-4.5zM3 15.75a.75.75 0 01.75.75v2.25a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v2.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V16.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg></span>
-            <span>Upload Files</span>
+            <!-- NEW ICON: Inbox / Download -->
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm1 1v12h12V4H4z" clip-rule="evenodd" />
+                <path d="M2 18a1 1 0 011-1h16a1 1 0 011 1v4a1 1 0 01-1 1H3a1 1 0 01-1-1v-4zM12 7a1 1 0 011 1v4.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L11 12.586V8a1 1 0 011-1z" clip-rule="evenodd" />
+              </svg>
+            </span>
+            <span>Received Docs</span>
           </li>
 
           <li class="nav-item" onclick="window.location.href='resident-profile.html'">
-            <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" /></svg></span>
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+              </svg>
+            </span>
             <span>My Profile</span>
           </li>
         </ul>
@@ -49,37 +69,40 @@
     </aside>
 
     <main class="main-content">
-      <div class="form-container mb-6">
-        <h2 class="text-xl font-bold mb-4">📄 Upload Requirements</h2>
-        <div class="alert-error" id="error-box"></div>
-        <div class="alert-success" id="success-box"></div>
+      <header class="mb-8 flex justify-between items-start flex-wrap gap-4">
+        <div>
+          <h1 class="header-title">My Received Documents</h1>
+          <p class="header-subtitle">Download your approved certificates and official barangay documents here.</p>
+        </div>
+      </header>
 
-        <form id="upload-form" onsubmit="return handleUpload(event)">
-          <label>Link to Request</label>
-          <select id="request_id" required></select>
-
-          <label>Document Type</label>
-          <select id="document_type" required>
-            <option value="Valid ID">Valid ID</option>
-            <option value="Proof of Residency">Proof of Residency</option>
-          </select>
-
-          <label>Select File (PDF, JPG, PNG - Max 5MB)</label>
-          <input type="file" id="document_file" accept=".pdf,.jpg,.jpeg,.png" required>
-
-          <button type="submit" id="upload-btn" class="btn-action btn-success w-full" style="padding: 14px; font-size: 16px;">Upload Document</button>
-        </form>
-      </div>
-
-      <div class="table-container">
-        <h2 class="text-xl font-bold mb-4">My Submitted Documents</h2>
+      <section class="table-container">
+        <h2 class="text-lg font-semibold mb-4">Document Inbox</h2>
         <div class="overflow-x-auto">
           <table>
-            <thead><tr><th>Request</th><th>Document</th><th>File</th><th>Preview</th><th>Status</th><th>Download</th><th>Official</th></tr></thead>
-            <tbody id="docs-table-body"></tbody>
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Document Type</th>
+                <th>File Name</th>
+                <th>Date Received</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="docs-table-body">
+              <!-- Loaded dynamically -->
+            </tbody>
           </table>
         </div>
-      </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-16 hidden">
+          <div class="text-6xl mb-4">📭</div>
+          <h3 class="text-xl font-bold mb-2">No Documents Received Yet</h3>
+          <p class="text-white/60 mb-6">Once the Admin approves and uploads your certificate, it will appear here.</p>
+          <a href="resident_dashboard.html" class="btn-action btn-pickup">Go to Dashboard</a>
+        </div>
+      </section>
     </main>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

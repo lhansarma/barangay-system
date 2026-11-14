@@ -149,6 +149,21 @@
   }
   .btn-cancel:hover { background: rgba(255,255,255,0.1); }
 
+  /* Success Overlay */
+  #success-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10, 22, 55, 0.9);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    text-align: center;
+  }
+  #success-overlay h1 { font-size: 60px; margin-bottom: 10px; }
+  #success-overlay h2 { font-size: 24px; color: #2ecc71; }
+
   @media(max-width: 768px) { 
     .card { padding: 30px 20px; }
   }
@@ -180,7 +195,6 @@
         </div>
         <div class="gcash-info">GCash No: 09363002122</div>
         
-        <!-- NEW: Dynamic Amount to Transfer -->
         <div class="transfer-amount" id="transfer-text">Amount to transfer: Loading...</div>
 
         <label>Enter GCash Reference No.</label>
@@ -195,6 +209,13 @@
     <button type="submit" id="pay-btn" class="btn">Confirm Payment</button>
     <button type="button" class="btn btn-cancel" onclick="window.location.href='resident_dashboard.html'">Cancel</button>
   </form>
+</div>
+
+<!-- Success Overlay -->
+<div id="success-overlay">
+  <h1>✅</h1>
+  <h2>Payment Successful!</h2>
+  <p style="margin-top: 10px; color: rgba(255,255,255,0.7);">Redirecting to dashboard...</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -219,11 +240,7 @@
       if(data) {
           currentAmount = data.amount_to_pay || 50;
           const formattedAmount = parseFloat(currentAmount).toFixed(2);
-          
-          // Update the big amount
           document.getElementById('display-amount').textContent = `₱ ${formattedAmount}`;
-          
-          // Update the text below the QR code
           document.getElementById('transfer-text').textContent = `Amount to transfer: ₱ ${formattedAmount}`;
       }
   }
@@ -268,29 +285,31 @@
     btn.disabled = true;
     btn.textContent = 'Processing...';
 
-    setTimeout(async () => {
-      const paymentStatus = method === 'GCash' ? 'Paid' : 'Unpaid';
+    // Prepare update data
+    const paymentStatus = method === 'GCash' ? 'Paid' : 'Unpaid';
+    const updateData = { payment_status: paymentStatus };
+    
+    if (method === 'GCash') {
+        // Store the reference number in the notes column
+        updateData.notes = `GCash Ref: ${refNo}`; 
+    }
+
+    // Update Database
+    const { error } = await supabaseClient.from('requests').update(updateData).eq('id', reqId);
+
+    if(error) {
+      alert("Payment update failed: " + error.message);
+      btn.disabled = false;
+      btn.textContent = method === 'Cash' ? 'Confirm Cash Pickup' : 'Confirm GCash Payment';
+    } else {
+      // Show Success Overlay
+      document.getElementById('success-overlay').style.display = 'flex';
       
-      const updateData = { payment_status: paymentStatus };
-      if (method === 'GCash') {
-          updateData.notes = `GCash Ref: ${refNo}`; 
-      }
-
-      const { error } = await supabaseClient.from('requests').update(updateData).eq('id', reqId);
-
-      if(error) {
-        alert("Payment update failed: " + error.message);
-        btn.disabled = false;
-        btn.textContent = method === 'Cash' ? 'Confirm Cash Pickup' : 'Confirm GCash Payment';
-      } else {
-        if (method === 'GCash') {
-          alert(`✅ GCash Payment of ₱${parseFloat(currentAmount).toFixed(2)} Successful!\nRef No: ${refNo}`);
-        } else {
-          alert(`✅ Cash option selected. Please pay ₱${parseFloat(currentAmount).toFixed(2)} at the Barangay Hall.`);
-        }
-        window.location.href = 'resident_dashboard.html';
-      }
-    }, 1500);
+      // Redirect after 2 seconds
+      setTimeout(() => {
+          window.location.href = 'resident_dashboard.html';
+      }, 2000);
+    }
   }
 </script>
 </body>
